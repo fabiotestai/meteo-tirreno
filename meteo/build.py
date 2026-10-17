@@ -169,8 +169,12 @@ def build(out_dir: Path, demo: bool = False) -> dict:
             gseries = demo_series(grid.points(), start, hours, i, extra=False)
             sseries = demo_series(spot_pts, start, hours, i, extra=True)
         else:
-            gseries = openmeteo.fetch_hourly(grid.points(), GRID_VARS, m["id"], days)
-            sseries = openmeteo.fetch_hourly(spot_pts, SPOT_VARS, m["id"], days)
+            try:
+                gseries = openmeteo.fetch_hourly(grid.points(), GRID_VARS, m["id"], days)
+                sseries = openmeteo.fetch_hourly(spot_pts, SPOT_VARS, m["id"], days)
+            except Exception as e:  # un modello che fallisce non blocca gli altri
+                annotate("warning", f"{m['label']} saltato", f"{type(e).__name__}: {e}")
+                continue
         u, v = wind_frames(gseries, axis)
         valid = [any(x is not None for x in frame) for frame in u]
         payload = {**grid_header(grid), "u": u, "v": v}
@@ -192,8 +196,11 @@ def build(out_dir: Path, demo: bool = False) -> dict:
         try:
             waves = openmeteo.fetch_hourly(spot_pts, WAVE_VARS, None, days, marine=True)
         except Exception as e:  # le onde non devono bloccare il resto
-            print(f"  onde non disponibili: {e}")
+            annotate("warning", "Onde non disponibili", f"{type(e).__name__}: {e}")
             waves = [None] * len(spots)
+
+    if not models_meta:
+        raise RuntimeError("nessun modello scaricato: vedi gli avvisi sopra")
 
     spot_recs = [
         spot_record(s, {k: spot_models[k][j] for k in spot_models}, waves[j], hourly)
@@ -214,12 +221,22 @@ def build(out_dir: Path, demo: bool = False) -> dict:
     return meta
 
 
+def annotate(level: str, title: str, message: str) -> None:
+    """Stampa il messaggio; su GitHub Actions compare anche come avviso nel riepilogo."""
+    flat = message.replace("\r", " ").replace("\n", " ")[:900]
+    print(f"::{level} title={title}::{flat}", flush=True)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, default=ROOT / "web" / "data")
     ap.add_argument("--demo", action="store_true", help="dati sintetici, senza rete")
     args = ap.parse_args()
-    build(args.out, demo=args.demo)
+    try:
+        build(args.out, demo=args.demo)
+    except Exception as e:
+        annotate("error", "Pipeline fallita", f"{type(e).__name__}: {e}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
