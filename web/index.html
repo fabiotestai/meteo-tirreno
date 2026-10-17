@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vento Tirreno–Ligure</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
+<style>
+/* Layout: mappa a tutto schermo, barra di controllo in basso come su un plotter di bordo */
+:root {
+  --bg: #0b1418;          /* notte in mare */
+  --panel: #111e24;
+  --line: #24363e;
+  --fg: #dfe9ec;
+  --muted: #86a0a8;
+  --accent: #f2b544;      /* giallo cerata */
+  --sans: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.35 var(--sans); overflow: hidden; }
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+#map { flex: 1; min-height: 0; background: var(--bg); }
+#overlay { position: absolute; inset: 0; pointer-events: none; z-index: 400; }
+#overlay canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+header {
+  position: absolute; z-index: 600; top: 0; left: 0; right: 0;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) max(14px, env(safe-area-inset-right, 0px)) 10px max(14px, env(safe-area-inset-left, 0px));
+  display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
+  background: linear-gradient(var(--bg), transparent); pointer-events: none;
+}
+header > * { pointer-events: auto; }
+h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
+h1 small { display: block; font: 400 12px var(--mono); color: var(--muted); text-transform: none; letter-spacing: 0; }
+
+.models { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
+.models button {
+  font: 500 13px var(--sans); color: var(--muted); background: none; border: 0;
+  padding: 7px 10px; cursor: pointer; border-right: 1px solid var(--line);
+}
+.models button:last-child { border-right: 0; }
+.models button[aria-pressed="true"] { background: var(--accent); color: #1a1405; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#demo { position: absolute; z-index: 600; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 64px);
+  background: #5a2a18; color: #ffd9c8; font: 500 12px var(--sans); padding: 4px 10px; border-radius: 4px; white-space: nowrap; }
+
+footer {
+  position: relative; z-index: 600; background: var(--panel); border-top: 1px solid var(--line);
+  padding: 10px max(14px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 10px) max(14px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 8px;
+}
+.timebar { display: flex; align-items: center; gap: 10px; }
+.timebar button {
+  flex: none; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); font-size: 15px; cursor: pointer;
+}
+#when { font: 600 15px var(--mono); min-width: 0; flex: 1; font-variant-numeric: tabular-nums; }
+#when span { color: var(--muted); font-weight: 400; font-size: 12px; display: block; }
+input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+.legend { display: flex; height: 8px; border-radius: 2px; overflow: hidden; }
+.legend i { flex: 1; }
+.ticks { display: flex; justify-content: space-between; font: 400 11px var(--mono); color: var(--muted); }
+
+/* popup e scheda spot */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--fg); border: 1px solid var(--line); box-shadow: none; }
+.leaflet-popup-content { margin: 10px 12px; font: 14px var(--sans); }
+.leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+.pop table { border-collapse: collapse; font: 13px var(--mono); }
+.pop td { padding: 2px 8px 2px 0; white-space: nowrap; }
+.pop .m { color: var(--muted); font-family: var(--sans); }
+.arrow { display: inline-block; width: 1em; text-align: center; }
+
+#sheet {
+  position: absolute; z-index: 700; left: 0; right: 0; bottom: 0; max-height: 62%;
+  background: var(--panel); border-top: 1px solid var(--line); display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+#sheet header { position: static; background: none; padding: 12px max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px)); flex-wrap: nowrap; align-items: center; }
+#sheet h2 { margin: 0; font-size: 18px; font-weight: 600; }
+#sheet .close { background: none; border: 1px solid var(--line); color: var(--fg); border-radius: 6px; padding: 6px 10px; font: 500 13px var(--sans); cursor: pointer; }
+.scroll { overflow: auto; padding: 0 max(14px, env(safe-area-inset-right, 0px)) 12px max(14px, env(safe-area-inset-left, 0px)); }
+.spot { border-collapse: collapse; font: 13px var(--mono); font-variant-numeric: tabular-nums; min-width: 100%; }
+.spot th { font: 500 12px var(--sans); color: var(--muted); text-align: left; padding: 4px 10px 4px 0; position: sticky; top: 0; background: var(--panel); }
+.spot td { padding: 4px 10px 4px 0; white-space: nowrap; border-top: 1px solid var(--line); }
+.spot tr.day td { border-top: 1px solid var(--muted); }
+.kn { display: inline-block; min-width: 2.4em; padding: 0 4px; border-radius: 3px; color: #071014; font-weight: 600; text-align: right; }
+.leaflet-control-attribution { background: rgba(11,20,24,.7) !important; color: var(--muted) !important; font-size: 10px; }
+.leaflet-control-attribution a { color: var(--muted) !important; }
+@media (prefers-reduced-motion: reduce) { #play { display: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map"></div>
+  <div id="overlay"><canvas id="field"></canvas><canvas id="particles"></canvas></div>
+  <header>
+    <h1>Vento Tirreno–Ligure<small id="updated">caricamento…</small></h1>
+    <div class="models" id="models" role="group" aria-label="Modello"></div>
+  </header>
+  <div id="demo" hidden>Dati sintetici di prova: non è una previsione</div>
+  <footer>
+    <div class="timebar">
+      <button id="prev" aria-label="Mezz'ora prima">‹</button>
+      <div id="when">–</div>
+      <button id="play" aria-label="Riproduci">▶</button>
+      <button id="next" aria-label="Mezz'ora dopo">›</button>
+    </div>
+    <input id="slider" type="range" min="0" max="0" value="0" aria-label="Ora della previsione">
+    <div class="legend" id="legend"></div>
+    <div class="ticks"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span><span>40 kn</span></div>
+  </footer>
+  <section id="sheet" hidden>
+    <header><h2 id="sheet-title"></h2><button class="close" id="sheet-close">Chiudi</button></header>
+    <div class="scroll"><table class="spot" id="sheet-table"></table></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+const KN = 1 / 0.514444;              // m/s -> nodi
+const NAMES = ["Tramontana","Grecale","Levante","Scirocco","Ostro","Libeccio","Ponente","Maestrale"];
+const BF = [1,3,6,10,16,21,27,33,40,47,55,63];
+// scala colori in nodi, pensata per chi va in barca: sotto 10 tranquillo, sopra 25 si riduce tela
+const STOPS = [[0,[40,70,120]],[5,[40,120,170]],[10,[60,170,140]],[15,[150,200,80]],[20,[240,200,60]],[25,[240,130,50]],[30,[220,60,60]],[40,[190,60,170]],[55,[235,210,245]]];
+
+const S = { meta: null, wind: {}, spots: null, model: null, t: 0, playing: null };
+const fmtDay = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric", month: "short" });
+const fmtHour = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
+const fmtShort = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", weekday: "short", hour: "2-digit", minute: "2-digit" });
+
+function color(kn) {
+  for (let i = 1; i < STOPS.length; i++) {
+    if (kn <= STOPS[i][0]) {
+      const [a, ca] = STOPS[i - 1], [b, cb] = STOPS[i], w = (kn - a) / (b - a);
+      return ca.map((c, k) => Math.round(c + (cb[k] - c) * w));
+    }
+  }
+  return STOPS[STOPS.length - 1][1];
+}
+const css = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+const beaufort = kn => { for (let i = 0; i < BF.length; i++) if (kn < BF[i]) return i; return 12; };
+const windName = d => NAMES[Math.floor((((d % 360) + 360) % 360 + 22.5) / 45) % 8];
+// la freccia indica dove VA il vento (direzione di provenienza + 180°)
+const arrow = d => `<span class="arrow" style="transform:rotate(${(d + 180) % 360}deg)">↑</span>`;
+
+// ---------------------------------------------------------------- mappa
+const map = L.map("map", { zoomControl: false, attributionControl: true, minZoom: 6, maxZoom: 11 });
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  subdomains: "abcd", maxZoom: 19,
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a> · dati <a href="https://open-meteo.com/">Open-Meteo</a>, ItaliaMeteo, DWD, ECMWF (CC BY 4.0)'
+}).addTo(map);
+
+// ---------------------------------------------------------------- campo
+function sampler(key, t) {
+  const w = S.wind[key]; if (!w) return null;
+  const U = w.u[t], V = w.v[t];
+  return (lat, lon) => {
+    const gx = (lon - w.lo1) / w.dx, gy = (w.la1 - lat) / w.dy;
+    if (gx < 0 || gy < 0 || gx > w.nx - 1 || gy > w.ny - 1) return null;
+    const i = Math.min(Math.floor(gx), w.nx - 2), j = Math.min(Math.floor(gy), w.ny - 2);
+    const fx = gx - i, fy = gy - j, a = j * w.nx + i, b = a + 1, c = a + w.nx, d = c + 1;
+    if (U[a] == null || U[b] == null || U[c] == null || U[d] == null) return null;
+    const bl = (A) => A[a] * (1 - fx) * (1 - fy) + A[b] * fx * (1 - fy) + A[c] * (1 - fx) * fy + A[d] * fx * fy;
+    return [bl(U), bl(V)];
+  };
+}
+
+const fieldCv = document.getElementById("field"), partCv = document.getElementById("particles");
+const fctx = fieldCv.getContext("2d"), pctx = partCv.getContext("2d");
+let W = 0, H = 0, DPR = 1, sample = null;
+
+function resize() {
+  const r = map.getContainer().getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2); W = r.width; H = r.height;
+  for (const cv of [fieldCv, partCv]) { cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + "px"; cv.style.height = H + "px"; }
+  fctx.setTransform(DPR, 0, 0, DPR, 0, 0); pctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+function drawField() {
+  fctx.clearRect(0, 0, W, H);
+  if (!sample) return;
+  const step = 5, cw = Math.ceil(W / step), ch = Math.ceil(H / step);
+  const small = document.createElement("canvas"); small.width = cw; small.height = ch;
+  const sctx = small.getContext("2d"), img = sctx.createImageData(cw, ch);
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+    const ll = map.containerPointToLatLng([x * step, y * step]);
+    const uv = sample(ll.lat, ll.lng); if (!uv) continue;
+    const c = color(Math.hypot(uv[0], uv[1]) * KN), o = (y * cw + x) * 4;
+    img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 120;
+  }
+  sctx.putImageData(img, 0, 0);
+  fctx.imageSmoothingEnabled = true;
+  fctx.drawImage(small, 0, 0, cw * step, ch * step);
+}
+
+// particelle: spostamento in pixel proporzionale alla velocità (Mercatore è conforme: la direzione resta giusta)
+let parts = [], raf = null;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function seed(p) { p.x = Math.random() * W; p.y = Math.random() * H; p.age = Math.floor(Math.random() * 80); }
+function resetParticles() {
+  const n = Math.round(Math.min(2500, (W * H) / 260));
+  parts = Array.from({ length: n }, () => { const p = {}; seed(p); return p; });
+  pctx.clearRect(0, 0, W, H);
+}
+function frame() {
+  pctx.save();
+  pctx.globalCompositeOperation = "destination-in";
+  pctx.fillStyle = "rgba(0,0,0,0.9)"; pctx.fillRect(0, 0, W, H);
+  pctx.restore();
+  pctx.lineWidth = 1.1; pctx.strokeStyle = "rgba(240,248,250,0.85)"; pctx.beginPath();
+  const k = 0.12 * Math.pow(1.35, map.getZoom() - 7);
+  for (const p of parts) {
+    if (p.age++ > 90) { seed(p); continue; }
+    const ll = map.containerPointToLatLng([p.x, p.y]);
+    const uv = sample && sample(ll.lat, ll.lng);
+    if (!uv) { seed(p); continue; }
+    const nx = p.x + uv[0] * k, ny = p.y - uv[1] * k;
+    pctx.moveTo(p.x, p.y); pctx.lineTo(nx, ny);
+    p.x = nx; p.y = ny;
+    if (nx < 0 || ny < 0 || nx > W || ny > H) seed(p);
+  }
+  pctx.stroke();
+  raf = requestAnimationFrame(frame);
+}
+function startAnim() { cancelAnimationFrame(raf); resetParticles(); if (!reduced) raf = requestAnimationFrame(frame); }
+function stopAnim() { cancelAnimationFrame(raf); pctx.clearRect(0, 0, W, H); }
+
+function render() {
+  sample = sampler(S.model, S.t);
+  drawField();
+  startAnim();
+  const t = S.meta.times[S.t];
+  const avail = sample && S.wind[S.model].u[S.t].some(v => v != null);
+  document.getElementById("when").innerHTML =
+    `${fmtDay.format(t * 1000)} ${fmtHour.format(t * 1000)}<span>${avail ? labelOf(S.model) : labelOf(S.model) + " non copre quest'ora"}</span>`;
+  document.getElementById("slider").value = S.t;
+}
+const labelOf = key => (S.meta.models.find(m => m.key === key) || {}).label || key;
+
+map.on("movestart zoomstart", () => { stopAnim(); fctx.clearRect(0, 0, W, H); });
+map.on("moveend zoomend", () => { if (S.meta) render(); });
+window.addEventListener("resize", () => { resize(); if (S.meta) render(); });
+
+// ---------------------------------------------------------------- interazione
+function setModel(key) {
+  S.model = key;
+  for (const b of document.querySelectorAll("#models button")) b.setAttribute("aria-pressed", b.dataset.key === key);
+  try { localStorage.setItem("model", key); } catch (e) {}
+  render();
+}
+function setTime(i) { S.t = Math.max(0, Math.min(S.meta.times.length - 1, i)); render(); }
+
+document.getElementById("slider").addEventListener("input", e => setTime(+e.target.value));
+document.getElementById("prev").onclick = () => setTime(S.t - 1);
+document.getElementById("next").onclick = () => setTime(S.t + 1);
+document.getElementById("play").onclick = e => {
+  if (S.playing) { clearInterval(S.playing); S.playing = null; e.target.textContent = "▶"; return; }
+  e.target.textContent = "❚❚";
+  S.playing = setInterval(() => setTime(S.t + 1 >= S.meta.times.length ? 0 : S.t + 1), 700);
+};
+
+map.on("click", ev => {
+  const rows = S.meta.models.map(m => {
+    const f = sampler(m.key, S.t), uv = f && f(ev.latlng.lat, ev.latlng.lng);
+    if (!uv) return `<tr><td class="m">${m.label}</td><td colspan="3">–</td></tr>`;
+    const kn = Math.hypot(uv[0], uv[1]) * KN, dir = (Math.atan2(-uv[0], -uv[1]) * 180 / Math.PI + 360) % 360;
+    return `<tr><td class="m">${m.label}</td><td><span class="kn" style="background:${css(color(kn))}">${kn.toFixed(0)}</span> kn</td>` +
+      `<td>F${beaufort(kn)}</td><td>${arrow(dir)} ${windName(dir)} ${dir.toFixed(0)}°</td></tr>`;
+  }).join("");
+  L.popup({ maxWidth: 340 }).setLatLng(ev.latlng)
+    .setContent(`<div class="pop"><table>${rows}</table></div>`).openOn(map);
+});
+
+// ---------------------------------------------------------------- spot
+function openSpot(sp) {
+  const times = S.spots.times, models = S.meta.models;
+  let head = `<tr><th>Ora</th>${models.map(m => `<th>${m.label}</th>`).join("")}<th>Raffica</th><th>Pioggia</th><th>Onda</th></tr>`;
+  let body = "", lastDay = "";
+  const ref = models[0].key;
+  for (let i = 0; i < times.length; i += 3) {
+    const t = times[i] * 1000, day = fmtDay.format(t);
+    const cells = models.map(m => {
+      const r = sp.models[m.key]; const s = r && r.speed[i], d = r && r.dir[i];
+      return s == null ? "<td>–</td>" : `<td><span class="kn" style="background:${css(color(s))}">${Math.round(s)}</span> ${arrow(d)}</td>`;
+    }).join("");
+    const g = sp.models[ref] && sp.models[ref].gust[i], r = sp.models[ref] && sp.models[ref].rain[i];
+    const w = sp.waves && sp.waves.height[i];
+    body += `<tr class="${day !== lastDay ? "day" : ""}"><td>${day !== lastDay ? day + " " : ""}${fmtHour.format(t)}</td>${cells}` +
+      `<td>${g == null ? "–" : Math.round(g)}</td><td>${r == null ? "–" : r.toFixed(1)}</td>` +
+      `<td>${w == null ? "–" : w.toFixed(1) + " m " + arrow(sp.waves.dir[i])}</td></tr>`;
+    lastDay = day;
+  }
+  document.getElementById("sheet-title").textContent = sp.name;
+  document.getElementById("sheet-table").innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
+  document.getElementById("sheet").hidden = false;
+}
+document.getElementById("sheet-close").onclick = () => { document.getElementById("sheet").hidden = true; };
+
+// ---------------------------------------------------------------- avvio
+async function load() {
+  const get = p => fetch(p, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(p + " " + r.status); return r.json(); });
+  try {
+    S.meta = await get("data/meta.json");
+    const [spots, ...winds] = await Promise.all([get("data/spots.json"), ...S.meta.models.map(m => get(`data/wind_${m.key}.json`))]);
+    S.spots = spots; S.meta.models.forEach((m, i) => S.wind[m.key] = winds[i]);
+  } catch (e) {
+    document.getElementById("updated").textContent = "Dati non disponibili: lancia la pipeline (python -m meteo.build)";
+    return;
+  }
+  const a = S.meta.area;
+  map.fitBounds([[a.lat_min, a.lon_min], [a.lat_max, a.lon_max]], { padding: [0, 0] });
+  document.getElementById("updated").textContent = "aggiornato " + fmtShort.format(S.meta.generated * 1000);
+  document.getElementById("demo").hidden = S.meta.source !== "demo";
+  document.getElementById("legend").innerHTML = [0,5,10,15,20,25,30,35].map(k => `<i style="background:linear-gradient(90deg,${css(color(k))},${css(color(k + 5))})"></i>`).join("");
+  document.getElementById("models").innerHTML = S.meta.models.map(m => `<button data-key="${m.key}" title="${m.note}">${m.label}</button>`).join("");
+  for (const b of document.querySelectorAll("#models button")) b.onclick = () => setModel(b.dataset.key);
+  for (const sp of S.spots.spots) {
+    L.circleMarker([sp.lat, sp.lon], { radius: 7, color: "#f2b544", weight: 2, fillColor: "#0b1418", fillOpacity: 1 })
+      .bindTooltip(sp.name, { direction: "top" }).on("click", e => { L.DomEvent.stopPropagation(e); openSpot(sp); }).addTo(map);
+  }
+  const slider = document.getElementById("slider"); slider.max = S.meta.times.length - 1;
+  const now = Date.now() / 1000; S.t = Math.max(0, S.meta.times.findIndex(t => t >= now - 900));
+  let saved = null; try { saved = localStorage.getItem("model"); } catch (e) {}
+  resize();
+  setModel(S.meta.models.some(m => m.key === saved) ? saved : S.meta.models[0].key);
+}
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+name: Aggiorna previsioni
+
+on:
+  schedule:
+    # ogni 3 ore al minuto 23 (UTC): prende le nuove corse di ICON-EU,
+    # ECMWF (00/06/12/18) e ICON-2I (00/12) appena Open-Meteo le pubblica
+    - cron: "23 */3 * * *"
+  workflow_dispatch: {}   # pulsante "Run workflow" per lanciarlo a mano
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test
+        run: python -m unittest discover -s tests
+
+      - name: Scarica ed elabora
+        run: |
+          mkdir -p site
+          cp web/index.html site/
+          python -m meteo.build --out site/data
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
