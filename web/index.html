@@ -21,11 +21,12 @@
   color-scheme: dark;
 }
 html, body { height: 100%; margin: 0; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--fg); font: 15px/1.35 var(--sans); overflow: hidden; }
 #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
 #map { flex: 1; min-height: 0; background: var(--bg); }
-#overlay { position: absolute; inset: 0; pointer-events: none; z-index: 400; }
-#overlay canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#overlay { position: absolute; left: 0; top: 0; pointer-events: none; }
+#overlay canvas { position: absolute; left: 0; top: 0; }
 
 header {
   position: absolute; z-index: 600; top: 0; left: 0; right: 0;
@@ -91,6 +92,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
 .kn { display: inline-block; min-width: 2.4em; padding: 0 4px; border-radius: 3px; color: #071014; font-weight: 600; text-align: right; }
 .leaflet-control-attribution { background: rgba(11,20,24,.7) !important; color: var(--muted) !important; font-size: 10px; }
 .leaflet-control-attribution a { color: var(--muted) !important; }
+.osm-dim { filter: invert(1) hue-rotate(180deg) brightness(.75) saturate(.4); }
 @media (prefers-reduced-motion: reduce) { #play { display: none; } }
 </style>
 </head>
@@ -151,10 +153,30 @@ const arrow = d => `<span class="arrow" style="transform:rotate(${(d + 180) % 36
 
 // ---------------------------------------------------------------- mappa
 const map = L.map("map", { zoomControl: false, attributionControl: true, minZoom: 6, maxZoom: 11 });
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  subdomains: "abcd", maxZoom: 19,
-  attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a> · dati <a href="https://open-meteo.com/">Open-Meteo</a>, ItaliaMeteo, DWD, ECMWF (CC BY 4.0)'
+// mappa di base Esri "Dark Gray Canvas": nessuna chiave richiesta; le etichette stanno in un livello separato sopra il vento
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+const base = L.tileLayer(ESRI + "World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+  maxZoom: 16,
+  attribution: 'Mappa © Esri · dati <a href="https://open-meteo.com/">Open-Meteo</a>, ItaliaMeteo, DWD, ECMWF (CC BY 4.0)'
 }).addTo(map);
+// se Esri non risponde, ripiego sulla mappa standard di OpenStreetMap
+let tileErrors = 0;
+base.on("tileerror", () => {
+  if (++tileErrors !== 6) return;
+  map.removeLayer(base);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 16, className: "osm-dim",
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · dati Open-Meteo, ItaliaMeteo, DWD, ECMWF (CC BY 4.0)'
+  }).addTo(map);
+});
+map.createPane("labels");
+map.getPane("labels").style.zIndex = 450;   // sopra il vento, sotto spot e popup
+map.getPane("labels").style.pointerEvents = "none";
+// il campo di vento vive in un pane tra i tasselli (200) e le etichette (450)
+map.createPane("wind");
+map.getPane("wind").style.zIndex = 350;
+map.getPane("wind").appendChild(document.getElementById("overlay"));
+L.tileLayer(ESRI + "World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16, pane: "labels" }).addTo(map);
 
 // ---------------------------------------------------------------- campo
 function sampler(key, t) {
@@ -231,7 +253,11 @@ function frame() {
 function startAnim() { cancelAnimationFrame(raf); resetParticles(); if (!reduced) raf = requestAnimationFrame(frame); }
 function stopAnim() { cancelAnimationFrame(raf); pctx.clearRect(0, 0, W, H); }
 
+const overlay = document.getElementById("overlay");
 function render() {
+  // il pane si sposta con la mappa: riporto il canvas all'angolo in alto a sinistra del riquadro visibile
+  L.DomUtil.setPosition(overlay, map.containerPointToLayerPoint([0, 0]));
+  overlay.style.width = W + "px"; overlay.style.height = H + "px";
   sample = sampler(S.model, S.t);
   drawField();
   startAnim();
