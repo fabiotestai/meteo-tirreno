@@ -1,0 +1,32 @@
+name: Prova di fattibilità (passo 3)
+
+# Le fonti del job giornaliero (archivio ARPAL, OMIRL, Open-Meteo) rispondono
+# da un runner GitHub? Nessun deploy: solo richieste di prova, esito nel
+# riepilogo della corsa e nelle annotazioni.
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [prova-fattibilita]   # così si prova senza toccare main
+
+permissions:
+  contents: read
+
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test
+        run: python -m unittest discover -s tests
+
+      - name: Indirizzo pubblico del runner
+        run: curl -s --max-time 20 https://ipinfo.io/json || true
+
+      - name: Fonti dati
+        run: python -m meteo.fattibilita

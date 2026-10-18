@@ -100,11 +100,13 @@ giorni_anticipo = 1           # l'orizzonte non arriva al giorno 2
 riferimento = "ICON-2I"
 
 # Stazioni ARPAL (archivio "Ambiente in Liguria"); coordinate e quota da OMIRL.
+# omirl = codice della stessa stazione nel tempo reale OMIRL (ultimi 7 giorni a 10 minuti).
 # in_mappa = il MOS di questa stazione compare nella scheda dello spot (una stazione per spot).
 [[verifica.stazioni]]
 spot = "Genova"
 nome = "Genova - Porto Antico"
 codice = "ME00309"
+omirl = "GEPOA"
 lat = 44.40816
 lon = 8.92317
 quota_m = 25
@@ -114,6 +116,7 @@ in_mappa = true
 spot = "Golfo della Spezia"
 nome = "La Spezia"
 codice = "ME00094"
+omirl = "SPZIA"
 lat = 44.10703
 lon = 9.82819
 quota_m = 35
@@ -123,6 +126,7 @@ in_mappa = true
 spot = "Golfo della Spezia"
 nome = "Portovenere"
 codice = "ME00208"
+omirl = "PVENE"
 lat = 44.052
 lon = 9.83594
 quota_m = 40
@@ -131,6 +135,7 @@ quota_m = 40
 spot = "Marina di Carrara"
 nome = "Luni - Provasco"
 codice = "ME00265"
+omirl = "LUNIS"
 lat = 44.07491
 lon = 10.00899
 quota_m = 5
