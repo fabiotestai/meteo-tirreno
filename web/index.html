@@ -223,24 +223,31 @@ function drawField() {
   fctx.drawImage(small, 0, 0, cw * step, ch * step);
 }
 
-// particelle: spostamento in pixel proporzionale alla velocità (Mercatore è conforme: la direzione resta giusta)
-let parts = [], raf = null;
+// particelle: spostamento in pixel proporzionale alla velocità (Mercatore è conforme: la direzione resta giusta).
+// Tutto è riferito al TEMPO, non ai fotogrammi: a 144 Hz le particelle vanno come a 60 Hz.
+// A zoom 7 un vento di 20 nodi scorre di circa 20·PX_PER_KN_S ≈ 48 px/s.
+// Prima: 0,12 px/nodo per fotogramma (7,2 px/nodo/s a 60 Hz, 17 a 144 Hz), vita 1,5 s.
+const PX_PER_KN_S = 2.4, LIFE_S = 4, TRAIL_KEEP_S = 0.12;  // velocità, vita di una particella, scia rimasta dopo 1 s
+let parts = [], raf = null, lastT = null;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-function seed(p) { p.x = Math.random() * W; p.y = Math.random() * H; p.age = Math.floor(Math.random() * 80); }
+function seed(p) { p.x = Math.random() * W; p.y = Math.random() * H; p.age = Math.random() * LIFE_S; }
 function resetParticles() {
   const n = Math.round(Math.min(2500, (W * H) / 260));
   parts = Array.from({ length: n }, () => { const p = {}; seed(p); return p; });
   pctx.clearRect(0, 0, W, H);
+  lastT = null;
 }
-function frame() {
+function frame(t) {
+  const dt = lastT === null ? 1 / 60 : Math.min((t - lastT) / 1000, 0.1);  // dopo una scheda in pausa non si salta
+  lastT = t;
   pctx.save();
   pctx.globalCompositeOperation = "destination-in";
-  pctx.fillStyle = "rgba(0,0,0,0.9)"; pctx.fillRect(0, 0, W, H);
+  pctx.fillStyle = `rgba(0,0,0,${Math.pow(TRAIL_KEEP_S, dt)})`; pctx.fillRect(0, 0, W, H);
   pctx.restore();
   pctx.lineWidth = 1.1; pctx.strokeStyle = "rgba(240,248,250,0.85)"; pctx.beginPath();
-  const k = 0.12 * Math.pow(1.35, map.getZoom() - 7);
+  const k = PX_PER_KN_S * dt * Math.pow(1.35, map.getZoom() - 7);
   for (const p of parts) {
-    if (p.age++ > 90) { seed(p); continue; }
+    if ((p.age += dt) > LIFE_S) { seed(p); continue; }
     const ll = map.containerPointToLatLng([p.x, p.y]);
     const uv = sample && sample(ll.lat, ll.lng);
     if (!uv) { seed(p); continue; }
