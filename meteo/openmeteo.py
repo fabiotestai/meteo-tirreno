@@ -19,6 +19,7 @@ from typing import Any, Iterable, Sequence
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 MARINE_URL = "https://marine-api.open-meteo.com/v1/marine"
+PREVIOUS_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
 CHUNK = 100  # punti per richiesta (le coordinate vanno nell'URL)
 USER_AGENT = "meteo-tirreno/0.1 (progetto personale)"
 
@@ -92,4 +93,42 @@ def fetch_hourly(
         for item in data:
             hourly = item.get("hourly") or {}
             out.append({k: hourly.get(k, []) for k in ["time", *variables]})
+    return out
+
+
+def fetch_previous_runs(
+    point: tuple[float, float],
+    variables: Sequence[str],
+    model: str,
+    start_date: str,
+    end_date: str,
+    days: int,
+) -> dict:
+    """Previsioni passate di un punto, separate per giorni di anticipo.
+
+    Per ogni ora T, "previous_dayN" è il valore previsto per T dalla corsa
+    uscita circa N giorni prima (anticipo tra 24·N e 24·N+23 ore); N = 0 è la
+    corsa più recente. Serve per verificare il modello come lo si usa davvero,
+    a 1-2 giorni, e non solo sulle prime ore di ogni corsa.
+
+    Ritorna {"time": [unix...], 0: {var: [...]}, 1: {var: [...]}, ...}.
+    Vento in m/s; tempi in UTC.
+    """
+    names = {(var, d): var if d == 0 else f"{var}_previous_day{d}" for var in variables for d in range(days + 1)}
+    params = {
+        "latitude": f"{point[0]:.4f}",
+        "longitude": f"{point[1]:.4f}",
+        "hourly": ",".join(names.values()),
+        "models": model,
+        "start_date": start_date,
+        "end_date": end_date,
+        "wind_speed_unit": "ms",
+        "timeformat": "unixtime",
+        "timezone": "GMT",
+    }
+    hourly = _get(PREVIOUS_RUNS_URL, params).get("hourly") or {}
+    times = hourly.get("time", [])
+    out: dict = {"time": times}
+    for (var, d), name in names.items():
+        out.setdefault(d, {})[var] = hourly.get(name) or [None] * len(times)
     return out

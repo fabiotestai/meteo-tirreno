@@ -18,6 +18,11 @@ per il passaggio a data analyst / data engineer, quindi il codice deve restare l
 - `web/index.html`: Leaflet 1.9.4 + canvas (campo colorato e particelle). Pane "wind" a z-index 350,
   etichette Esri a 450. Mappa di base Esri Dark Gray Canvas (nessuna chiave), fallback OpenStreetMap.
 - `.github/workflows/aggiorna.yml`: test → build → deploy Pages.
+- `meteo/arpal.py`: archivio orario ARPAL (form ASP a frame, sessione con cookie; un anno per richiesta).
+- `meteo/verifica.py`: fase 1, `python -m meteo.verifica` → osservati ARPAL + Open-Meteo previous runs
+  alle coordinate delle stazioni, punteggi in `web/data/verifica.json` e `dati/verifica.csv`.
+  Cache dei download in `dati/` (non versionata): anni e mesi conclusi non si riscaricano.
+  `[[verifica.confronti]]` = modelli solo da verificare (AROME HD), testa a testa con un riferimento.
 
 ## Regole che non vanno rotte
 
@@ -28,6 +33,7 @@ per il passaggio a data analyst / data engineer, quindi il codice deve restare l
 - Quota Open-Meteo gratuita ~10.000 chiamate/giorno (una per punto): oggi ~8.000. Ricalcolare prima
   di infittire la griglia o aggiungere modelli. L'API gratuita è solo per uso non commerciale.
 - Test: `python -m unittest discover -s tests`, devono passare prima di ogni push.
+- Sul Mac di Fabio il Python di sistema è 3.9: usare `~/tools/python-3.12/bin/python3` (build standalone).
 
 ## Stato (18 ottobre 2026)
 
