@@ -6,7 +6,7 @@ from unittest import mock
 
 from meteo import openmeteo
 from meteo.arpal import parse_report
-from meteo.verifica import _months, angle_diff, compare, evaluate, scores
+from meteo.verifica import _months, angle_diff, compare, evaluate, scalar_scores, scores
 from meteo.wind import KNOT_MS
 
 # Estratto reale (accorciato) del CSV del portale: un blocco per parametro, fine riga \r\n
@@ -88,6 +88,19 @@ class TestScores(unittest.TestCase):
         self.assertEqual(sc["bias"], 0)  # stessa velocità...
         self.assertAlmostEqual(sc["rmse_vett"], 20, places=1)  # ...ma vento opposto
         self.assertEqual(sc["mae_dir"], 180)
+
+    def test_direction_mask_depends_only_on_observed_speed(self):
+        # previsto quasi calmo ma vento osservato forte: l'ora conta (la previsione non la esclude)
+        sc = scores([({"speed": 1, "dir": 0}, {"speed": 10, "dir": 90})], min_dir_kn=4)
+        self.assertEqual((sc["n_dir"], sc["mae_dir"]), (1, 90))
+        # osservato calmo: l'ora non conta, anche se il previsto è forte
+        sc = scores([({"speed": 10, "dir": 0}, {"speed": 1, "dir": 90})], min_dir_kn=4)
+        self.assertEqual(sc["n_dir"], 0)
+
+    def test_scalar_scores(self):
+        sc = scalar_scores([12, 8], [10, 10])
+        self.assertEqual((sc["n"], sc["bias"], sc["mae"], sc["rmse"]), (2, 0, 2, 2))
+        self.assertEqual(scalar_scores([], []), {"n": 0})
 
     def test_calm_excluded_from_direction(self):
         sc = scores([({"speed": 2, "dir": 0}, {"speed": 2, "dir": 180})], min_dir_kn=4)

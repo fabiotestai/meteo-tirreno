@@ -28,7 +28,8 @@ Punteggi, con f = previsto e o = osservato (velocità in nodi), su N ore:
     RMSE vett. \\sqrt{\\frac{1}{N}\\sum_i [(u^f_i - u^o_i)^2 + (v^f_i - v^o_i)^2]}
                errore sul vettore vento: tiene insieme intensità e direzione
     MAE dir.   \\frac{1}{N'}\\sum_i |\\delta_i|, con \\delta_i = ((d^f_i - d^o_i + 180) \\bmod 360) - 180,
-               solo sulle N' ore con f e o sopra la soglia (sotto, la direzione è rumore)
+               solo sulle N' ore con vento OSSERVATO sopra la soglia (sotto, la direzione è
+               rumore); le ore non dipendono dalla previsione, così i confronti sono equi
 """
 from __future__ import annotations
 
@@ -148,26 +149,17 @@ def angle_diff(a: float, b: float) -> float:
     return (a - b + 180.0) % 360.0 - 180.0
 
 
-def scores(pairs: list[tuple[dict, dict]], min_dir_kn: float) -> dict:
-    """Punteggi su coppie (previsto, osservato) con velocità in nodi."""
-    n = len(pairs)
+def scalar_scores(f: list[float], o: list[float]) -> dict:
+    """Bias, MAE, RMSE e correlazione di una grandezza scalare (previsto f, osservato o)."""
+    n = len(f)
     if n == 0:
         return {"n": 0}
-    f = [p["speed"] for p, _ in pairs]
-    o = [q["speed"] for _, q in pairs]
     err = [a - b for a, b in zip(f, o)]
     mf, mo = sum(f) / n, sum(o) / n
     sf = math.sqrt(sum((x - mf) ** 2 for x in f))
     so = math.sqrt(sum((x - mo) ** 2 for x in o))
     cov = sum((x - mf) * (y - mo) for x, y in zip(f, o))
-    vec = 0.0
-    for p, q in pairs:
-        uf, vf = speed_dir_to_uv(p["speed"], p["dir"])
-        uo, vo = speed_dir_to_uv(q["speed"], q["dir"])
-        vec += (uf - uo) ** 2 + (vf - vo) ** 2
-    dirs = [abs(angle_diff(p["dir"], q["dir"])) for p, q in pairs if p["speed"] >= min_dir_kn and q["speed"] >= min_dir_kn]
-    gusts = [p["gust"] - q["gust"] for p, q in pairs if p.get("gust") is not None and q.get("gust") is not None]
-    out = {
+    return {
         "n": n,
         "oss_media": round(mo, 2),
         "prev_media": round(mf, 2),
@@ -175,13 +167,36 @@ def scores(pairs: list[tuple[dict, dict]], min_dir_kn: float) -> dict:
         "mae": round(sum(abs(e) for e in err) / n, 2),
         "rmse": round(math.sqrt(sum(e * e for e in err) / n), 2),
         "r": round(cov / (sf * so), 3) if sf > 0 and so > 0 else None,
-        "rmse_vett": round(math.sqrt(vec / n), 2),
+    }
+
+
+def scores(pairs: list[tuple[dict, dict]], min_dir_kn: float) -> dict:
+    """Punteggi su coppie (previsto, osservato) con velocità in nodi.
+
+    L'errore di direzione si conta sulle ore con vento OSSERVATO sopra la soglia:
+    la scelta delle ore non dipende dalla previsione, quindi modelli e
+    correzioni diverse si confrontano sulle stesse ore. (Filtrare anche sulla
+    velocità prevista, come si faceva all'inizio, dà a ogni previsione un
+    insieme di ore diverso e falsa i confronti.)
+    """
+    if not pairs:
+        return {"n": 0}
+    out = scalar_scores([p["speed"] for p, _ in pairs], [q["speed"] for _, q in pairs])
+    vec = 0.0
+    for p, q in pairs:
+        uf, vf = speed_dir_to_uv(p["speed"], p["dir"])
+        uo, vo = speed_dir_to_uv(q["speed"], q["dir"])
+        vec += (uf - uo) ** 2 + (vf - vo) ** 2
+    dirs = [abs(angle_diff(p["dir"], q["dir"])) for p, q in pairs if q["speed"] >= min_dir_kn]
+    gusts = [p["gust"] - q["gust"] for p, q in pairs if p.get("gust") is not None and q.get("gust") is not None]
+    return {
+        **out,
+        "rmse_vett": round(math.sqrt(vec / len(pairs)), 2),
         "n_dir": len(dirs),
         "mae_dir": round(sum(dirs) / len(dirs), 1) if dirs else None,
         "n_raffica": len(gusts),
         "bias_raffica": round(sum(gusts) / len(gusts), 2) if gusts else None,
     }
-    return out
 
 
 def _kn(rec: dict) -> dict:
