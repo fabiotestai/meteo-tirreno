@@ -23,6 +23,11 @@ per il passaggio a data analyst / data engineer, quindi il codice deve restare l
   alle coordinate delle stazioni, punteggi in `web/data/verifica.json` e `dati/verifica.csv`.
   Cache dei download in `dati/` (non versionata): anni e mesi conclusi non si riscaricano.
   `[[verifica.confronti]]` = modelli solo da verificare (AROME HD), testa a testa con un riferimento.
+- `meteo/mos.py`: fase 2, `python -m meteo.mos` (dopo la verifica, usa solo `dati/`). Velocità e raffiche:
+  regressione per stazione x giorno x insieme di modelli x settore PREVISTO, ridge verso il fit comune.
+  Direzione: fonte (un modello o media dei vettori) e rotazione scelte in validazione. Prova su mesi mai visti
+  (`[mos].test_dal`), con IC95 a blocchi di un giorno. Contratto con la produzione: `correzioni/mos.json`
+  (versionato, `versione` 1) e `apply_correction()`; il dizionario valutato è quello pubblicato.
 
 ## Regole che non vanno rotte
 
@@ -32,6 +37,9 @@ per il passaggio a data analyst / data engineer, quindi il codice deve restare l
 - Un modello che fallisce non deve bloccare gli altri; gli errori escono come annotazioni `::warning`/`::error`.
 - Quota Open-Meteo gratuita ~10.000 chiamate/giorno (una per punto): oggi ~8.000. Ricalcolare prima
   di infittire la griglia o aggiungere modelli. L'API gratuita è solo per uso non commerciale.
+- Confronti tra modelli o correzioni sempre sulle STESSE ore, scelte senza guardare la previsione (la
+  direzione si misura solo con vento OSSERVATO sopra soglia). Filtrare sulla velocità prevista falsa il confronto:
+  ci si era già cascati nella prima verifica.
 - Test: `python -m unittest discover -s tests`, devono passare prima di ogni push.
 - Sul Mac di Fabio il Python di sistema è 3.9: usare `~/tools/python-3.12/bin/python3` (build standalone).
 
@@ -39,6 +47,13 @@ per il passaggio a data analyst / data engineer, quindi il codice deve restare l
 
 Fatto: pipeline con ICON-2I, ICON-EU, ECMWF e onde; mappa con timeline a 30', confronto modelli al tocco,
 schede degli 8 spot; deploy automatico funzionante con dati reali.
+Fase 1 (verifica su Genova Porto Antico, La Spezia, Portovenere, Luni) e fase 2 (MOS v2: velocità, direzione,
+raffiche) fatte e valutate in locale. ICON-2I è il modello grezzo migliore, anche sulla direzione. Su 6 mesi mai
+visti (da 14/04/2026) il MOS riduce il MAE della velocità del 15–45% (IC95 sotto zero in 48/48 casi), quello
+della direzione del combinato di 3–7° rispetto a ICON-2I grezzo, quello delle raffiche del 1–41%. I coefficienti
+valgono ALLE STAZIONI (esposizione locale, ad es. la baia della Spezia ruota il vento): non sono trasferibili
+agli spot al largo senza dirlo. Il MOS non è ancora applicato nella mappa né aggiornato dalla CI.
+Buco noto: Open-Meteo non ha ICON-2I previous_day1/2 da metà aprile a metà giugno 2026.
 
 Prossime fasi, in ordine:
 1. Osservazioni reali (stazioni ARPAL e MeteoHub, boe) e confronto previsione/osservato.

@@ -130,3 +130,9 @@ codice = "ME00265"
 lat = 44.07491
 lon = 10.00899
 quota_m = 5
+
+# Correzione statistica (python -m meteo.mos, dopo meteo.verifica).
+[mos]
+test_dal = "2026-04-14"       # si allena prima, si misura dopo: 6 mesi mai visti
+lambda = [3, 30, 300, 3000]   # quanto i settori sono tirati verso il fit comune (scelto in allenamento)
+raffiche = ["ICON-2I", "ICON-EU"]   # ECMWF open data ha le raffiche solo al giorno 0, quindi non entra nel MOS delle raffiche
