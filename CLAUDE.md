@@ -73,7 +73,10 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
      Fatto il 18/10/2026: `python -m meteo.fattibilita` + `.github/workflows/fattibilita.yml` (gira sul ramo `prova-fattibilita`,
      nessun deploy). Da rete italiana tutto OK: l'archivio ARPAL arriva fino a ~2 h prima (basta per l'incrementale),
      OMIRL (`/Omirl/rest/charts/<codice>/Vento`, XML, 7 giorni a 10', orari UTC) a pochi minuti; codici OMIRL in config.
-     Esito dal runner GitHub: DA FARE (serve il push del ramo `prova-fattibilita`).
+     Esito dal runner GitHub (corsa 39113546715, 18/10/2026): tutto OK, stessi numeri che dall'Italia (ARPAL 247 ore in 6 s,
+     ultima 2 h prima; OMIRL a 0,2 h; Open-Meteo completo). Nessun blocco degli IP esteri: il piano B dal Mac non serve.
+     Una prova sola: il job giornaliero deve comunque gestire un ARPAL che non risponde (avviso, nessun blocco).
+     Le azioni `checkout@v4`/`setup-python@v5` girano su Node 20, deprecato: aggiornarle anche in `aggiorna.yml`.
    - ramo `dati` con i CSV (osservati e previsioni, divisi per mese) e `correzioni/mos.json`;
    - job giornaliero: ARPAL incrementale (ultimi 10 giorni, sovrascrivendo) più ricarica mensile completa (correzioni a
      posteriori), controlli di qualità (valori fuori scala, sensore bloccato, stazione muta da più di 24 h), verifica su
