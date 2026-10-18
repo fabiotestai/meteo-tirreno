@@ -70,6 +70,10 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
 3. Dati e verifica automatici:
    - prova di fattibilità: un workflow manuale che chiama ARPAL (archivio e OMIRL) e Open-Meteo da un runner GitHub.
      Rischio principale: i server regionali potrebbero bloccare gli IP esteri; piano B = aggiornamento dal Mac (launchd) con push.
+     Fatto il 18/10/2026: `python -m meteo.fattibilita` + `.github/workflows/fattibilita.yml` (gira sul ramo `prova-fattibilita`,
+     nessun deploy). Da rete italiana tutto OK: l'archivio ARPAL arriva fino a ~2 h prima (basta per l'incrementale),
+     OMIRL (`/Omirl/rest/charts/<codice>/Vento`, XML, 7 giorni a 10', orari UTC) a pochi minuti; codici OMIRL in config.
+     Esito dal runner GitHub: DA FARE (serve il push del ramo `prova-fattibilita`).
    - ramo `dati` con i CSV (osservati e previsioni, divisi per mese) e `correzioni/mos.json`;
    - job giornaliero: ARPAL incrementale (ultimi 10 giorni, sovrascrivendo) più ricarica mensile completa (correzioni a
      posteriori), controlli di qualità (valori fuori scala, sensore bloccato, stazione muta da più di 24 h), verifica su
@@ -94,7 +98,7 @@ ha battuto ICON-2I.
    (finché il ramo non è unito a `main`; `main` pubblica il sito a ogni push).
 2. Python 3.11 o più recente, nessun pacchetto da installare (`python3 --version`). Sul Mac di Fabio:
    `~/tools/python-3.12/bin/python3`.
-3. `python3 -m unittest discover -s tests`: devono passare tutti (58 il 18/10/2026).
+3. `python3 -m unittest discover -s tests`: devono passare tutti (59 il 18/10/2026).
 4. Fuori da git c'è `dati/` (~22 MB: cache di ARPAL e Open-Meteo, ignorata). O si copia la cartella dal vecchio PC, o si
    rigenera con `python3 -m meteo.verifica` (circa 15 minuti, ~350 richieste; ARPAL va chiamato da una rete normale: da IP
    cloud potrebbe essere bloccato).
