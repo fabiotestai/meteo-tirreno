@@ -1,7 +1,9 @@
 """Test: python -m unittest discover -s tests"""
+import io
 import json
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest import mock
 
@@ -81,6 +83,16 @@ class TestOpenMeteoParsing(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertEqual(calls[0]["models"], "icon_eu")
         self.assertEqual(calls[0]["wind_speed_unit"], "kn")
+
+    def test_minutely_limit_waits_a_minute(self):
+        body = b'{"error":true,"reason":"Minutely API request limit exceeded. Please try again in one minute."}'
+        err = urllib.error.HTTPError("u", 429, "Too Many Requests", {}, io.BytesIO(body))
+        ok = mock.MagicMock()
+        ok.__enter__.return_value = io.BytesIO(b'{"hourly": {}}')
+        with mock.patch.object(openmeteo.urllib.request, "urlopen", side_effect=[err, ok]), \
+                mock.patch.object(openmeteo.time, "sleep") as sleep:
+            self.assertEqual(openmeteo._get("https://x", {}), {"hourly": {}})
+        sleep.assert_called_once_with(openmeteo.MINUTE_WAIT)
 
     def test_wind_frames_shape(self):
         series = [{"time": [0, 3600], "wind_speed_10m": [10, 10], "wind_direction_10m": [270, 270]}] * 4

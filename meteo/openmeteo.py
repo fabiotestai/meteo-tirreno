@@ -23,6 +23,7 @@ PREVIOUS_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
 RUN_META_URL = "https://api.open-meteo.com/data/{model}/static/meta.json"
 CHUNK = 100  # punti per richiesta (le coordinate vanno nell'URL)
 USER_AGENT = "meteo-tirreno/0.1 (progetto personale)"
+MINUTE_WAIT = 61  # secondi di attesa dopo "Minutely API request limit exceeded"
 
 
 def _get(url: str, params: dict[str, Any], retries: int = 3) -> Any:
@@ -35,7 +36,10 @@ def _get(url: str, params: dict[str, Any], retries: int = 3) -> Any:
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", "replace")[:300]
             if e.code in (429, 500, 502, 503, 504) and attempt < retries - 1:
-                time.sleep(5 * (attempt + 1))
+                # Oltre alla quota giornaliera c'è un limite al minuto (~600 chiamate,
+                # una per punto): due griglie di 330 punti lo superano, e il server
+                # chiede di riprovare dopo un minuto.
+                time.sleep(MINUTE_WAIT if "Minutely" in body else 5 * (attempt + 1))
                 continue
             raise RuntimeError(f"Open-Meteo {e.code}: {body}") from e
         except urllib.error.URLError:
