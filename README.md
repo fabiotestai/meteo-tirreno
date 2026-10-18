@@ -8,6 +8,7 @@ Mappa del vento per il Mar Ligure e l'alto Tirreno, con vento animato, timeline 
 - **Tre modelli**: ICON-2I (ItaliaMeteo, ~2 km), ICON-EU (DWD, ~7 km), ECMWF IFS (open data 0.25°).
 - **Tocco sulla mappa**: velocità, forza Beaufort e direzione col nome del vento (Libeccio, Maestrale…) per tutti e tre i modelli nello stesso punto.
 - **Spot costieri**: tabella ogni 3 ore con i tre modelli affiancati, raffiche, pioggia e onda.
+- **MOS** (Genova, Golfo della Spezia, Marina di Carrara): colonne di vento e raffica corrette statisticamente sulla stazione ARPAL vicina, con nella scheda quanto la correzione ha ridotto l'errore su mesi mai usati per allenare.
 
 ## Come funziona
 

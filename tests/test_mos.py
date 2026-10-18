@@ -4,18 +4,16 @@ import math
 import random
 import unittest
 
+from meteo.correzione import apply_correction, features, mean_wind
 from meteo.mos import (
     add_equations,
-    apply_correction,
     assess,
     block_bootstrap,
     build_samples,
     choose_direction,
     direction_sources,
-    features,
     fit,
     make_spec,
-    mean_wind,
     normal_equations,
     ridge,
     ridge_from_normal,

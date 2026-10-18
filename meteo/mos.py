@@ -40,7 +40,7 @@ Contratto con la produzione: correzioni/mos.json (versione SCHEMA_VERSION)
         direzione  (solo "vel") {fonte, ruota, rotazione}: direzione corretta = direzione prevista dalla
                    fonte + rotazione[settore previsto dalla stessa fonte]
     valutazione[]  i punteggi sulla prova; documentazione, non serve per applicare
-    apply_correction(corr, t, previsioni) applica una correzione, con
+    apply_correction(corr, t, previsioni) (in correzione.py) applica una correzione, con
         previsioni = {modello: {"vel": nodi, "dir": gradi, "raf": nodi o None}}, t = unix UTC
 Il dizionario che si valuta è lo stesso che finisce nel file: ciò che si misura è ciò che si pubblica.
 """
@@ -55,10 +55,10 @@ from pathlib import Path
 
 from .build import annotate, model_key
 from .config import ROOT, load_config
+from .correzione import SCHEMA_VERSION, apply_correction, features, predict_value, rotated_direction, source_wind
 from .verifica import DATA, _write_csv, angle_diff, load_forecast, load_observed, scalar_scores, scores
-from .wind import KNOT_MS, WIND_NAMES, speed_dir_to_uv, uv_to_speed_dir, wind_name
+from .wind import KNOT_MS, WIND_NAMES, wind_name
 
-SCHEMA_VERSION = 1
 LAMBDA_DIR = 50.0  # ore equivalenti di "nessuna rotazione" nella mediana della direzione
 POOL_RIDGE = 1e-3  # regolarizzazione minima del fit comune, solo per la stabilità numerica
 COMBINED = "combinato"
@@ -163,25 +163,6 @@ def build_samples(observed: dict[int, dict], forecasts: dict[str, dict[int, dict
 # ---------------------------------------------------------------- vento: fonte, settore, direzione
 
 
-def mean_wind(winds: list[tuple[float, float]]) -> tuple[float, float]:
-    """(velocità, direzione) del vento medio di più modelli: media dei VETTORI, mai delle direzioni."""
-    us, vs = zip(*(speed_dir_to_uv(s, d) for s, d in winds))
-    return uv_to_speed_dir(sum(us) / len(us), sum(vs) / len(vs))
-
-
-def source_wind(modelli: list[str], fc: dict) -> tuple[float, float]:
-    """(velocità, direzione) da cui si leggono settore e rotazione: un modello o la media di più."""
-    if len(modelli) == 1:
-        w = fc[modelli[0]]
-        return w["vel"], w["dir"]
-    return mean_wind([(fc[m]["vel"], fc[m]["dir"]) for m in modelli])
-
-
-def rotated_direction(fonte: list[str], rotazione: dict[str, float], fc: dict) -> float:
-    _, d = source_wind(fonte, fc)
-    return (d + rotazione[wind_name(d)]) % 360.0
-
-
 def direction_sources(models: list[str]) -> list[list[str]]:
     """Fonti candidate della direzione: ogni modello da solo, la media di tutti, la media dei due ICON."""
     sources = [[m] for m in models]
@@ -244,12 +225,6 @@ def make_spec(quantity: str, models: list[str]) -> dict:
     return {"grandezza": quantity, "modelli": models, "ingressi": [[m, q] for m in models for q in qs]}
 
 
-def features(ingressi: list, t: int, fc: dict) -> list[float]:
-    """Riga di X: intercetta, ingressi, armoniche dell'ora UTC."""
-    w = 2 * math.pi * (t % 86400) / 86400
-    return [1.0, *(fc[m][q] for m, q in ingressi), math.sin(w), math.cos(w)]
-
-
 def sector_stats(train: list[dict], spec: dict, fonte: list[str]) -> dict:
     """Equazioni normali per settore (previsto, dalla `fonte`) e su tutte le ore."""
     groups: dict[str, tuple[list, list]] = {name: ([], []) for name in WIND_NAMES}
@@ -286,20 +261,6 @@ def fit(
         rot = sector_rotation(train, direzione["fonte"], min_dir_kn) if direzione["ruota"] else dict(NO_ROTATION)
         corr["direzione"] = {**direzione, "rotazione": rot}
     return corr
-
-
-def predict_value(corr: dict, t: int, fc: dict) -> float:
-    beta = corr["settori"][wind_name(source_wind(corr["fonte"], fc)[1])]
-    return max(0.0, sum(b * x for b, x in zip(beta, features(corr["ingressi"], t, fc))))
-
-
-def apply_correction(corr: dict, t: int, fc: dict) -> dict:
-    """Valore corretto in nodi; per la velocità anche la direzione corretta in gradi."""
-    value = predict_value(corr, t, fc)
-    if corr["grandezza"] == "vel":
-        d = corr["direzione"]
-        return {"vel": value, "dir": rotated_direction(d["fonte"], d["rotazione"], fc)}
-    return {"raf": value}
 
 
 def train_correction(train: list[dict], spec: dict, lambdas: list[float], min_dir_kn: float) -> dict:

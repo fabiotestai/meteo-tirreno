@@ -8,7 +8,8 @@ Uso:
 File prodotti in --out:
     meta.json          data di generazione, modelli, asse dei tempi, griglia
     wind_<modello>.json   campo di vento u/v (m/s) per ogni istante, per la mappa animata
-    spots.json         serie orarie per gli spot: vento, raffiche, pioggia, onda
+    spots.json         serie orarie per gli spot: vento, raffiche, pioggia, onda e, per gli spot
+                       con una stazione ARPAL in config (in_mappa), la serie corretta dal MOS
 """
 from __future__ import annotations
 
@@ -18,13 +19,14 @@ import math
 import time
 from pathlib import Path
 
-from . import openmeteo
+from . import correzione, openmeteo
 from .config import ROOT, Grid, build_grid, load_config
-from .wind import KNOT_MS, interpolate, interpolate_wind, speed_dir_to_uv, time_axis
+from .wind import KNOT_MS, distance_km, interpolate, interpolate_wind, speed_dir_to_uv, time_axis
 
 GRID_VARS = ["wind_speed_10m", "wind_direction_10m"]
 SPOT_VARS = ["wind_speed_10m", "wind_direction_10m", "wind_gusts_10m", "precipitation"]
 WAVE_VARS = ["wave_height", "wave_direction", "wave_period"]
+STATION_VARS = ["wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"]
 
 
 def _r(x, nd=1):
@@ -74,8 +76,10 @@ def grid_header(grid: Grid) -> dict:
 # ---------------------------------------------------------------- spot
 
 
-def spot_record(spot: dict, per_model: dict[str, dict], waves: dict | None, hours: list[int]) -> dict:
+def spot_record(spot: dict, per_model: dict[str, dict], waves: dict | None, hours: list[int], mos: dict | None = None) -> dict:
     rec = {"name": spot["name"], "lat": spot["lat"], "lon": spot["lon"], "models": {}, "waves": None}
+    if mos:
+        rec["mos"] = mos
     for key, s in per_model.items():
         rec["models"][key] = {
             "speed": [_r(x) for x in interpolate(s["time"], s["wind_speed_10m"], hours)],
@@ -142,6 +146,46 @@ def demo_waves(spots, start: int, hours: int) -> list[dict]:
     ]
 
 
+# ---------------------------------------------------------------- MOS
+
+
+def mos_for_spots(cfg: dict, start: int, hourly: list[int], days: int, demo: bool) -> dict[str, dict]:
+    """Per ogni spot con una stazione `in_mappa`, la serie corretta dal MOS (vedi meteo/correzione.py).
+
+    Scarica le previsioni dei modelli alle coordinate delle stazioni (una decina di chiamate per
+    aggiornamento). Qualsiasi problema, file mancante o scaduto o rete, toglie il MOS dalla pagina
+    ma non blocca la pipeline.
+    """
+    stations = [s for s in cfg["verifica"]["stazioni"] if s.get("in_mappa")]
+    if not stations:
+        return {}
+    mos, why = correzione.load_corrections()
+    if mos is None:
+        annotate("warning", "MOS non disponibile", why)
+        return {}
+    keys = [model_key(m["label"]) for m in cfg["models"]]
+    pts = [(s["lat"], s["lon"]) for s in stations]
+    try:
+        if demo:
+            ref_init = start
+            fetched = [demo_series(pts, start, len(hourly) - 1, i, extra=True) for i in range(len(keys))]
+        else:
+            ref_init = openmeteo.fetch_run_init(cfg["models"][0]["meta"])
+            fetched = [openmeteo.fetch_hourly(pts, STATION_VARS, m["id"], days) for m in cfg["models"]]
+    except Exception as e:  # il MOS non deve bloccare il resto
+        annotate("warning", "MOS saltato", f"{type(e).__name__}: {e}")
+        return {}
+    spots = {s["name"]: s for s in cfg["spots"]}
+    out = {}
+    for j, st in enumerate(stations):
+        block = correzione.station_block(mos, st, {k: f[j] for k, f in zip(keys, fetched)}, ref_init, hourly)
+        if block and st["spot"] in spots:
+            sp = spots[st["spot"]]
+            block["stazione"]["distanza_km"] = round(distance_km(sp["lat"], sp["lon"], st["lat"], st["lon"]), 1)
+            out[st["spot"]] = block
+    return out
+
+
 # ---------------------------------------------------------------- main
 
 
@@ -202,8 +246,9 @@ def build(out_dir: Path, demo: bool = False) -> dict:
     if not models_meta:
         raise RuntimeError("nessun modello scaricato: vedi gli avvisi sopra")
 
+    mos_by_spot = mos_for_spots(cfg, start, hourly, days, demo)
     spot_recs = [
-        spot_record(s, {k: spot_models[k][j] for k in spot_models}, waves[j], hourly)
+        spot_record(s, {k: spot_models[k][j] for k in spot_models}, waves[j], hourly, mos_by_spot.get(s["name"]))
         for j, s in enumerate(spots)
     ]
     (out_dir / "spots.json").write_text(json.dumps({"times": hourly, "spots": spot_recs}, separators=(",", ":")))

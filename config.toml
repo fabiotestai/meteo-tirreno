@@ -24,6 +24,7 @@ label = "ICON-2I"
 note = "ItaliaMeteo, ~2 km, 2 corse al giorno"
 # primo giorno con previsioni passate su Open-Meteo (previous runs), verificato il 18/10/2026
 archivio_dal = "2025-04-14"
+meta = "italia_meteo_arpae_icon_2i"   # cartella dati di Open-Meteo: dice da quale corsa vengono le previsioni
 
 [[models]]
 id = "icon_eu"
@@ -99,6 +100,7 @@ giorni_anticipo = 1           # l'orizzonte non arriva al giorno 2
 riferimento = "ICON-2I"
 
 # Stazioni ARPAL (archivio "Ambiente in Liguria"); coordinate e quota da OMIRL.
+# in_mappa = il MOS di questa stazione compare nella scheda dello spot (una stazione per spot).
 [[verifica.stazioni]]
 spot = "Genova"
 nome = "Genova - Porto Antico"
@@ -106,6 +108,7 @@ codice = "ME00309"
 lat = 44.40816
 lon = 8.92317
 quota_m = 25
+in_mappa = true
 
 [[verifica.stazioni]]
 spot = "Golfo della Spezia"
@@ -114,6 +117,7 @@ codice = "ME00094"
 lat = 44.10703
 lon = 9.82819
 quota_m = 35
+in_mappa = true
 
 [[verifica.stazioni]]
 spot = "Golfo della Spezia"
@@ -130,6 +134,7 @@ codice = "ME00265"
 lat = 44.07491
 lon = 10.00899
 quota_m = 5
+in_mappa = true
 
 # Correzione statistica (python -m meteo.mos, dopo meteo.verifica).
 [mos]

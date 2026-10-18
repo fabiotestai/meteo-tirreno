@@ -20,13 +20,14 @@ from typing import Any, Iterable, Sequence
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 MARINE_URL = "https://marine-api.open-meteo.com/v1/marine"
 PREVIOUS_RUNS_URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
+RUN_META_URL = "https://api.open-meteo.com/data/{model}/static/meta.json"
 CHUNK = 100  # punti per richiesta (le coordinate vanno nell'URL)
 USER_AGENT = "meteo-tirreno/0.1 (progetto personale)"
 
 
 def _get(url: str, params: dict[str, Any], retries: int = 3) -> Any:
     query = urllib.parse.urlencode(params, safe=",")
-    req = urllib.request.Request(f"{url}?{query}", headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(f"{url}?{query}" if query else url, headers={"User-Agent": USER_AGENT})
     for attempt in range(retries):
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:
@@ -94,6 +95,15 @@ def fetch_hourly(
             hourly = item.get("hourly") or {}
             out.append({k: hourly.get(k, []) for k in ["time", *variables]})
     return out
+
+
+def fetch_run_init(model_dir: str) -> int:
+    """Istante (unix, UTC) di inizializzazione dell'ultima corsa di un modello.
+
+    Le previsioni correnti per le ore future vengono da quella corsa: l'anticipo di
+    un'ora T è quindi T - istante. `model_dir` è il nome della cartella dati di Open-Meteo.
+    """
+    return int(_get(RUN_META_URL.format(model=model_dir), {})["last_run_initialisation_time"])
 
 
 def fetch_previous_runs(

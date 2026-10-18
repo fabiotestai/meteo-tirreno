@@ -89,6 +89,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
 .spot th { font: 500 12px var(--sans); color: var(--muted); text-align: left; padding: 4px 10px 4px 0; position: sticky; top: 0; background: var(--panel); }
 .spot td { padding: 4px 10px 4px 0; white-space: nowrap; border-top: 1px solid var(--line); }
 .spot tr.day td { border-top: 1px solid var(--muted); }
+.note { margin: 10px 0 0; max-width: 62ch; font: 12px/1.45 var(--sans); color: var(--muted); }
 .kn { display: inline-block; min-width: 2.4em; padding: 0 4px; border-radius: 3px; color: #071014; font-weight: 600; text-align: right; }
 .leaflet-control-attribution { background: rgba(11,20,24,.7) !important; color: var(--muted) !important; font-size: 10px; }
 .leaflet-control-attribution a { color: var(--muted) !important; }
@@ -118,7 +119,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
   </footer>
   <section id="sheet" hidden>
     <header><h2 id="sheet-title"></h2><button class="close" id="sheet-close">Chiudi</button></header>
-    <div class="scroll"><table class="spot" id="sheet-table"></table></div>
+    <div class="scroll"><table class="spot" id="sheet-table"></table><p class="note" id="sheet-note"></p></div>
   </section>
 </div>
 
@@ -134,6 +135,7 @@ const STOPS = [[0,[40,70,120]],[5,[40,120,170]],[10,[60,170,140]],[15,[150,200,8
 const S = { meta: null, wind: {}, spots: null, model: null, t: 0, playing: null };
 const fmtDay = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric", month: "short" });
 const fmtHour = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
+const fmtDM = new Intl.DateTimeFormat("it-IT", { timeZone: "UTC", day: "numeric", month: "short" });
 const fmtShort = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", weekday: "short", hour: "2-digit", minute: "2-digit" });
 
 function color(kn) {
@@ -304,9 +306,19 @@ map.on("click", ev => {
 });
 
 // ---------------------------------------------------------------- spot
+const fmt1 = x => x.toFixed(1).replace(".", ",");
+function mosNote(mos) {
+  const v = mos.info.vel, st = mos.stazione;
+  return `MOS: correzione statistica calcolata sulla stazione ARPAL «${st.nome}», a ${fmt1(st.distanza_km)} km dallo spot. ` +
+    (v ? `A un giorno di anticipo, nella prova dal ${fmtDM.format(new Date(mos.info.test_dal))} (mesi mai usati per allenare), ` +
+         `l'errore medio sulla velocità è sceso da ${fmt1(v.mae_grezzo)} a ${fmt1(v.mae_mos)} nodi rispetto a ICON-2I. ` : "") +
+    `Vale alla stazione, non al punto in mare. Coefficienti del ${fmtDM.format(mos.info.addestrato * 1000)}.`;
+}
 function openSpot(sp) {
-  const times = S.spots.times, models = S.meta.models;
-  let head = `<tr><th>Ora</th>${models.map(m => `<th>${m.label}</th>`).join("")}<th>Raffica</th><th>Pioggia</th><th>Onda</th></tr>`;
+  const times = S.spots.times, models = S.meta.models, mos = sp.mos;   // mos: solo per gli spot con una stazione ARPAL
+  let head = `<tr><th>Ora</th>${models.map(m => `<th>${m.label}</th>`).join("")}` +
+    (mos ? `<th title="Correzione statistica sulla stazione ARPAL ${mos.stazione.nome}">MOS</th>` : "") +
+    `<th>Raffica</th>` + (mos ? `<th title="Raffica corretta dal MOS">Raff. MOS</th>` : "") + `<th>Pioggia</th><th>Onda</th></tr>`;
   let body = "", lastDay = "";
   const ref = models[0].key;
   for (let i = 0; i < times.length; i += 3) {
@@ -316,13 +328,18 @@ function openSpot(sp) {
       return s == null ? "<td>–</td>" : `<td><span class="kn" style="background:${css(color(s))}">${Math.round(s)}</span> ${arrow(d)}</td>`;
     }).join("");
     const g = sp.models[ref] && sp.models[ref].gust[i], r = sp.models[ref] && sp.models[ref].rain[i];
+    const mv = mos && mos.vel[i];
+    const mosCells = !mos ? "" : (mv == null ? "<td>–</td>" :
+      `<td><span class="kn" style="background:${css(color(mv))}">${Math.round(mv)}</span> ${arrow(mos.dir[i])}</td>`);
+    const mosGust = !mos ? "" : `<td>${mos.raf[i] == null ? "–" : Math.round(mos.raf[i])}</td>`;
     const w = sp.waves && sp.waves.height[i];
-    body += `<tr class="${day !== lastDay ? "day" : ""}"><td>${day !== lastDay ? day + " " : ""}${fmtHour.format(t)}</td>${cells}` +
-      `<td>${g == null ? "–" : Math.round(g)}</td><td>${r == null ? "–" : r.toFixed(1)}</td>` +
+    body += `<tr class="${day !== lastDay ? "day" : ""}"><td>${day !== lastDay ? day + " " : ""}${fmtHour.format(t)}</td>${cells}${mosCells}` +
+      `<td>${g == null ? "–" : Math.round(g)}</td>${mosGust}<td>${r == null ? "–" : r.toFixed(1)}</td>` +
       `<td>${w == null ? "–" : w.toFixed(1) + " m " + arrow(sp.waves.dir[i])}</td></tr>`;
     lastDay = day;
   }
   document.getElementById("sheet-title").textContent = sp.name;
+  document.getElementById("sheet-note").textContent = mos ? mosNote(mos) : "";
   document.getElementById("sheet-table").innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
   document.getElementById("sheet").hidden = false;
 }
