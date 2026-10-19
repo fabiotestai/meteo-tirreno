@@ -1,6 +1,6 @@
 {
   "data_utc": "2026-10-19",
-  "generated": 1792419979,
+  "generated": 1792420403,
   "solo_cache": false,
   "stazioni": [
     {
@@ -1859,7 +1859,7 @@
         ],
         "sensore_costante_sospetto": [],
         "ultima_velocita": 1792414800,
-        "ritardo_ore": 1.4,
+        "ritardo_ore": 1.6,
         "muta": false
       },
       "finestre": {
@@ -11283,7 +11283,7 @@
         ],
         "sensore_costante_sospetto": [],
         "ultima_velocita": 1792414800,
-        "ritardo_ore": 1.4,
+        "ritardo_ore": 1.6,
         "muta": false
       },
       "finestre": {
@@ -20491,7 +20491,7 @@
         ],
         "sensore_costante_sospetto": [],
         "ultima_velocita": 1792414800,
-        "ritardo_ore": 1.4,
+        "ritardo_ore": 1.6,
         "muta": false
       },
       "finestre": {
@@ -29069,7 +29069,7 @@
         ],
         "sensore_costante_sospetto": [],
         "ultima_velocita": 1792414800,
-        "ritardo_ore": 1.4,
+        "ritardo_ore": 1.6,
         "muta": false
       },
       "finestre": {

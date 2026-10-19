@@ -8,10 +8,10 @@ I punteggi sono dei modelli grezzi. Nessun riallenamento MOS.
 
 | Stazione | Ultima velocità UTC | Ritardo h | Ore valide 30 / 365 giorni |
 |---|---|---|---|
-| Genova - Porto Antico | 2026-10-19T13:00:00+00:00 | 1.4 | 704 / 8452 |
-| La Spezia | 2026-10-19T13:00:00+00:00 | 1.4 | 695 / 8396 |
-| Portovenere | 2026-10-19T13:00:00+00:00 | 1.4 | 698 / 8432 |
-| Luni - Provasco | 2026-10-19T13:00:00+00:00 | 1.4 | 713 / 8537 |
+| Genova - Porto Antico | 2026-10-19T13:00:00+00:00 | 1.6 | 704 / 8452 |
+| La Spezia | 2026-10-19T13:00:00+00:00 | 1.6 | 695 / 8396 |
+| Portovenere | 2026-10-19T13:00:00+00:00 | 1.6 | 698 / 8432 |
+| Luni - Provasco | 2026-10-19T13:00:00+00:00 | 1.6 | 713 / 8537 |
 
 ## Avvisi
 
