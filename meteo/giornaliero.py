@@ -211,6 +211,7 @@ def run(root: Path, out: Path, cfg: dict, now: datetime, offline: bool = False,
         observed = archivio.read_observed(root, code)
         full = force_full or full_state.get(code) != today.strftime("%Y-%m")
         first = today - timedelta(days=int(ccfg["finestra_storica_giorni"] if full else ccfg["sovrapposizione_giorni"]))
+        print(f"[{st['nome']}] " + ("solo cache" if offline else f"ARPAL dal {first} (ricarica {'completa' if full else 'incrementale'})"), flush=True)
         if not offline:
             try:
                 if archive is None:
@@ -236,6 +237,7 @@ def run(root: Path, out: Path, cfg: dict, now: datetime, offline: bool = False,
             days = int(model.get("giorni_anticipo", vcfg["giorni_anticipo"]))
             fc = archivio.read_forecast(root, code, key, days)
             if not offline:
+                print(f"  {model['label']}: aggiornamento previous runs ...", flush=True)
                 try:
                     fc, complete = update_forecast(root, st, model, today - timedelta(days=int(ccfg["sovrapposizione_giorni"])), today - timedelta(days=1), days)
                     if not complete:
@@ -267,6 +269,7 @@ def run(root: Path, out: Path, cfg: dict, now: datetime, offline: bool = False,
     archivio.write_json(out / "giornaliero.json", result)
     report = summary(result)
     (out / "giornaliero.md").write_text(report, encoding="utf-8")
+    print(f"Fatto: {out / 'giornaliero.json'} e {out / 'giornaliero.md'}", flush=True)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write(report)

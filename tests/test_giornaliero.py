@@ -54,6 +54,7 @@ class ArchiveTests(unittest.TestCase):
         self.assertEqual(merged[t], record(0))
         archivio.write_observed(self.root, "X", merged)
         before = next((self.root / "osservati").glob("*.csv")).read_bytes()
+        self.assertNotIn(b"\r", before)  # archivio identico su Windows e Linux
         archivio.write_observed(self.root, "X", archivio.merge_records(merged, new))
         self.assertEqual(next((self.root / "osservati").glob("*.csv")).read_bytes(), before)
         self.assertEqual(len(archivio.read_observed(self.root, "X")), 2)
@@ -138,6 +139,9 @@ class QualityTests(unittest.TestCase):
 
 class RunTests(unittest.TestCase):
     def setUp(self):
+        annotations = mock.patch.object(giornaliero, "annotate")
+        annotations.start()
+        self.addCleanup(annotations.stop)
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name) / "dati"

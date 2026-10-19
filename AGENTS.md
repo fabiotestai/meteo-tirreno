@@ -120,7 +120,10 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
      Le azioni dei workflow sono aggiornate a Node 24 e fissate a SHA, comprese quelle Pages e gli artifact.
      Il job scrive soltanto sul checkout separato di `dati`, con corse serializzate e push senza force.
      Importazione locale verificata riga per riga: 97.881 ore osservate, 734.900 righe previste, 492 CSV mensili.
-     Coefficienti copiati, senza riallenamento. Da verificare il primo giro sul runner prima dell'attivazione.
+     Coefficienti copiati, senza riallenamento. Prima prova sul runner riuscita (corsa 39268912768):
+     73 test, ARPAL completo per tutte e quattro le stazioni fino alle 13 UTC del 19/10, Open-Meteo,
+     rapporti e push su `dati` OK. Nessun avviso Node 20. Correzione successiva: CSV con terminatori LF
+     e numeri normalizzati per evitare riscritture fra Windows e Linux; seconda prova incrementale da verificare.
    - job giornaliero: ARPAL incrementale (ultimi 10 giorni, sovrascrivendo) più ricarica mensile completa (correzioni a
      posteriori), controlli di qualità (valori fuori scala, sensore bloccato, stazione muta da più di 24 h), verifica su
      finestre di 30 e 365 giorni, MOS riallenato ogni mese su 12 mesi mobili;

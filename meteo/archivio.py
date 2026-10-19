@@ -19,7 +19,7 @@ def write_csv(path: Path, header: list[str], rows: list[list]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     with tmp.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator="\n")  # stessi byte su Windows e sul runner Linux
         writer.writerow(header)
         writer.writerows(rows)
     tmp.replace(path)
@@ -64,7 +64,7 @@ def merge_records(old: dict[int, dict], new: dict[int, dict]) -> dict[int, dict]
     """Aggiorna i valori restituiti; assenze e null non cancellano valori noti."""
     out = {t: dict(v) for t, v in old.items()}
     for t, v in new.items():
-        out.setdefault(t, {"speed": None, "gust": None, "dir": None}).update({k: x for k, x in v.items() if x is not None})
+        out.setdefault(t, {"speed": None, "gust": None, "dir": None}).update({k: float(x) for k, x in v.items() if x is not None})
     return out
 
 
