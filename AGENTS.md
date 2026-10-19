@@ -123,7 +123,10 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
      Coefficienti copiati, senza riallenamento. Prima prova sul runner riuscita (corsa 39268912768):
      73 test, ARPAL completo per tutte e quattro le stazioni fino alle 13 UTC del 19/10, Open-Meteo,
      rapporti e push su `dati` OK. Nessun avviso Node 20. Correzione successiva: CSV con terminatori LF
-     e numeri normalizzati per evitare riscritture fra Windows e Linux; seconda prova incrementale da verificare.
+     e numeri normalizzati per evitare riscritture fra Windows e Linux. Seconda prova incrementale riuscita
+     (corsa 39269984787, circa 4 minuti): nessun errore di fonte, solo 3 file di rapporto modificati,
+     nessun CSV riscritto. Restano avvisi sulle direzioni -1 già presenti nello storico. `main` non modificato;
+     job automatico ancora disattivato, prossimo intervento = revisione e integrazione prima di attivarlo.
    - job giornaliero: ARPAL incrementale (ultimi 10 giorni, sovrascrivendo) più ricarica mensile completa (correzioni a
      posteriori), controlli di qualità (valori fuori scala, sensore bloccato, stazione muta da più di 24 h), verifica su
      finestre di 30 e 365 giorni, MOS riallenato ogni mese su 12 mesi mobili;
