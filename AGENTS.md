@@ -65,7 +65,7 @@ In un sandbox senza internet (per esempio Codex nel cloud) usa solo i test e `--
 - Sul PC Windows di Fabio (cartella Desktop\meteo-tirreno) usare `py` al posto di `python`.
 - Sul Mac di Fabio il Python di sistema è 3.9: usare `~/tools/python-3.12/bin/python3` (build standalone).
 
-## Stato (18 ottobre 2026)
+## Stato (19 ottobre 2026)
 
 Fatto: pipeline con ICON-2I, ICON-EU, ECMWF e onde; mappa con timeline a 30', confronto modelli al tocco,
 schede degli 8 spot; deploy automatico funzionante con dati reali.
@@ -75,13 +75,15 @@ visti (da 14/04/2026) il MOS riduce il MAE della velocità del 15–45% (IC95 so
 della direzione del combinato di 3–7° rispetto a ICON-2I grezzo, quello delle raffiche del 1–41%. I coefficienti
 valgono ALLE STAZIONI (esposizione locale, ad es. la baia della Spezia ruota il vento): non sono trasferibili
 agli spot al largo senza dirlo. Il MOS è applicato nelle schede di Genova, Golfo della Spezia e Marina di Carrara (colonne MOS e Raff. MOS)
-ma non è ancora pubblicato né aggiornato dalla CI: `correzioni/mos.json` si rigenera a mano (`meteo.verifica`,
-poi `meteo.mos`) e scade dopo 60 giorni.
+ed è integrato in `main` dal 19 ottobre 2026, con pubblicazione tramite il workflow «Aggiorna previsioni».
+La CI applica i coefficienti ma non li riallena: `correzioni/mos.json` si rigenera a mano (`meteo.verifica`,
+poi `meteo.mos`) e scade dopo 60 giorni. Su questo PC è presente anche la cache locale `dati/` (~22 MB,
+370 CSV), ignorata da Git.
 Buco noto: Open-Meteo non ha ICON-2I previous_day1/2 da metà aprile a metà giugno 2026.
 
 ## Piano dei prossimi passi (concordato il 18 ottobre 2026)
 
-Fatti in locale, non ancora pubblicati: 1 (MOS v2 con raffiche e direzione) e 2 (MOS nelle schede dei 3 spot).
+Completati e integrati in `main` il 19 ottobre 2026: 1 (MOS v2 con raffiche e direzione) e 2 (MOS nelle schede dei 3 spot).
 Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` solo se lo dice (pubblica il sito).
 
 3. Dati e verifica automatici:
@@ -114,11 +116,11 @@ ha battuto ICON-2I.
 
 ## Come riprendere su un altro computer
 
-1. `git clone https://github.com/fabiotestai/meteo-tirreno.git && cd meteo-tirreno && git checkout passo-2-mos`
-   (finché il ramo non è unito a `main`; `main` pubblica il sito a ogni push).
+1. `git clone --branch main https://github.com/fabiotestai/meteo-tirreno.git && cd meteo-tirreno`
+   (`main` pubblica il sito a ogni push).
 2. Python 3.11 o più recente, nessun pacchetto da installare (`python3 --version`). Sul Mac di Fabio:
    `~/tools/python-3.12/bin/python3`.
-3. `python3 -m unittest discover -s tests`: devono passare tutti (59 il 18/10/2026).
+3. `python3 -m unittest discover -s tests`: devono passare tutti (60 il 19/10/2026).
 4. Fuori da git c'è `dati/` (~22 MB: cache di ARPAL e Open-Meteo, ignorata). O si copia la cartella dal vecchio PC, o si
    rigenera con `python3 -m meteo.verifica` (circa 15 minuti, ~350 richieste; ARPAL va chiamato da una rete normale: da IP
    cloud potrebbe essere bloccato).
