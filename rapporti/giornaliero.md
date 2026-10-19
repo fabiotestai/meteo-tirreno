@@ -6,19 +6,18 @@ Quota stimata: 8280 chiamate/giorno (senza retry o corse manuali).
 
 I punteggi sono dei modelli grezzi. Nessun riallenamento MOS.
 
-| Stazione | Ultima velocità UTC | Ritardo h | Ore valide 30 / 365 giorni |
-|---|---|---|---|
-| Genova - Porto Antico | 2026-10-19T13:00:00+00:00 | 1.6 | 704 / 8452 |
-| La Spezia | 2026-10-19T13:00:00+00:00 | 1.6 | 695 / 8396 |
-| Portovenere | 2026-10-19T13:00:00+00:00 | 1.6 | 698 / 8432 |
-| Luni - Provasco | 2026-10-19T13:00:00+00:00 | 1.6 | 713 / 8537 |
+Direzione -1 = non disponibile: conta fra le assenze, senza avvisi di fuori scala.
+
+| Stazione | Ultima velocità UTC | Ritardo h | Direzione N/D nel campione QC | Ore valide 30 / 365 giorni |
+|---|---|---|---|---|
+| Genova - Porto Antico | 2026-10-19T13:00:00+00:00 | 2.2 | 308 | 704 / 8452 |
+| La Spezia | 2026-10-19T13:00:00+00:00 | 2.2 | 364 | 695 / 8396 |
+| Portovenere | 2026-10-19T13:00:00+00:00 | 2.2 | 328 | 698 / 8432 |
+| Luni - Provasco | 2026-10-19T13:00:00+00:00 | 2.2 | 223 | 713 / 8537 |
 
 ## Avvisi
 
-- Genova - Porto Antico: 308 ore con valori fuori scala
-- La Spezia: 364 ore con valori fuori scala
-- Portovenere: 328 ore con valori fuori scala
-- Luni - Provasco: 223 ore con valori fuori scala
+Nessuno.
 
 ## Punteggi sul campione comune
 
