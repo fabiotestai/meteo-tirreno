@@ -116,6 +116,24 @@ class QualityTests(unittest.TestCase):
         self.cfg = load_config()["giornaliero"]
         self.now = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
 
+    def test_minus_one_and_null_direction_are_missing_not_out_of_range(self):
+        t = ts("2026-10-19T01:00")
+        original = {t: record(3, -1), t + 3600: record(4, None)}
+        clean, qc = giornaliero.quality(original, self.now, self.cfg)
+        self.assertEqual(qc["ore_direzione_non_disponibile"], 2)
+        self.assertEqual(qc["ore_fuori_scala"], [])
+        self.assertEqual(clean[t], record(3, None))
+        self.assertEqual(original[t]["dir"], -1)  # il dato originale resta consultabile
+
+    def test_other_invalid_directions_still_warn_and_north_is_valid(self):
+        t = ts("2026-10-19T01:00")
+        original = {t + i * 3600: record(3, d) for i, d in enumerate((-2, 361, 0, 360))}
+        clean, qc = giornaliero.quality(original, self.now, self.cfg)
+        self.assertEqual(qc["ore_direzione_non_disponibile"], 0)
+        self.assertEqual([r["campi"] for r in qc["ore_fuori_scala"]], [["dir"], ["dir"]])
+        self.assertEqual(clean[t + 2 * 3600]["dir"], 0)
+        self.assertEqual(clean[t + 3 * 3600]["dir"], 360)
+
     def test_physical_limits_nan_stale_station_and_original_preserved(self):
         t = ts("2026-10-18T00:00")
         original = {t: record(), t + 3600: record(-1, float("nan"), 300)}
@@ -171,6 +189,14 @@ class RunTests(unittest.TestCase):
         self.assertTrue(all(r["n_dir"] == 1 for r in rows))  # previsto calmo non elimina l'ora
         self.assertFalse((self.root / "stato.json").exists())
         self.assertTrue((self.out / "giornaliero.md").exists())
+
+    def test_missing_direction_does_not_produce_out_of_range_warning(self):
+        archivio.write_observed(self.root, self.code, {self.t: record(3, -1), self.t + 3600: record(4)})
+        result = self.run_job(True)
+        self.assertFalse(any("fuori scala" in w for w in result["avvisi"]))
+        self.assertEqual(result["stazioni"][0]["qualita"]["ore_direzione_non_disponibile"], 1)
+        self.assertEqual(archivio.read_observed(self.root, self.code)[self.t]["dir"], -1)
+        self.assertIn("Direzione N/D", (self.out / "giornaliero.md").read_text(encoding="utf-8"))
 
     def test_all_network_failures_keep_cache_and_model_membership(self):
         with mock.patch.object(giornaliero.arpal, "Archive", side_effect=OSError("ARPAL")), mock.patch.object(giornaliero.openmeteo, "fetch_previous_runs", side_effect=OSError("OM")):

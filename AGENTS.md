@@ -47,8 +47,10 @@ In un sandbox senza internet (per esempio Codex nel cloud) usa solo i test e `--
   Una risposta vuota o fallita non cancella la cache; ore e valori null non restituiti restano conservati.
   Una ricarica ARPAL che omette ore già note viene segnalata e non marcata come completata: non è possibile
   distinguere una revoca della misura da una risposta incompleta. Le sequenze costanti sono solo sospette.
-  Direzioni fuori [0, 360] (anche -1, presente nella cache) vengono escluse dal nuovo campione, senza
-  riscrivere gli originali né cambiare il MOS operativo; i nuovi punteggi possono quindi differire dai vecchi.
+  Direzione -1 = non disponibile, come un valore nullo: conteggiata nelle assenze (`ore_direzione_non_disponibile`),
+  senza avviso di fuori scala. Altri valori fuori [0, 360] e valori non finiti restano anomalie.
+  Il campione di verifica richiede comunque una direzione disponibile; i CSV originali e il MOS operativo
+  non vengono riscritti. I nuovi punteggi possono quindi differire dai vecchi.
   `rapporti/coefficienti/` conserva copie per hash; `registro_mos/` registra quando il job le ha lette,
   non certifica i coefficienti serviti nelle precedenti corse della mappa. Nessun punteggio MOS operativo ancora.
 - `meteo/verifica.py`: fase 1, `python -m meteo.verifica` → osservati ARPAL + Open-Meteo previous runs
@@ -115,8 +117,8 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
      Le azioni Node 20 deprecate sono aggiornate nella preparazione del 19/10/2026, anche in `aggiorna.yml`.
    - ramo `dati` con i CSV (osservati e previsioni, divisi per mese) e `correzioni/mos.json`;
      Preparazione del 19/10/2026 su `passo-2-mos`: `meteo.archivio`, `meteo.giornaliero` e workflow
-     `.github/workflows/dati.yml`. Prova su push mirati del ramo di lavoro e avvio manuale (dopo l'integrazione
-     nel ramo predefinito); schedule giornaliero proposto 05:47 UTC, ancora commentato. Nessun deploy.
+     `.github/workflows/dati.yml`. Integrato in `main` su richiesta del 19/10/2026: schedule giornaliero
+     attivo alle 05:47 UTC, avvio manuale e prova automatica su push mirati di `main`. Nessun deploy dal job dati.
      Le azioni dei workflow sono aggiornate a Node 24 e fissate a SHA, comprese quelle Pages e gli artifact.
      Il job scrive soltanto sul checkout separato di `dati`, con corse serializzate e push senza force.
      Importazione locale verificata riga per riga: 97.881 ore osservate, 734.900 righe previste, 492 CSV mensili.
@@ -125,8 +127,9 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
      rapporti e push su `dati` OK. Nessun avviso Node 20. Correzione successiva: CSV con terminatori LF
      e numeri normalizzati per evitare riscritture fra Windows e Linux. Seconda prova incrementale riuscita
      (corsa 39269984787, circa 4 minuti): nessun errore di fonte, solo 3 file di rapporto modificati,
-     nessun CSV riscritto. Restano avvisi sulle direzioni -1 già presenti nello storico. `main` non modificato;
-     job automatico ancora disattivato, prossimo intervento = revisione e integrazione prima di attivarlo.
+     nessun CSV riscritto. Il 19/10/2026 i -1 sono riclassificati come direzione non disponibile, senza avvisi.
+     Prima corsa con evento `schedule` attesa il 20/10/2026 alle 05:47 UTC (07:47 italiane); da controllare
+     esito, freschezza delle quattro stazioni, rapporto e commit su `dati`, distinguendola dalla prova su push.
    - job giornaliero: ARPAL incrementale (ultimi 10 giorni, sovrascrivendo) più ricarica mensile completa (correzioni a
      posteriori), controlli di qualità (valori fuori scala, sensore bloccato, stazione muta da più di 24 h), verifica su
      finestre di 30 e 365 giorni, MOS riallenato ogni mese su 12 mesi mobili;
@@ -150,7 +153,7 @@ ha battuto ICON-2I.
    (`main` pubblica il sito a ogni push).
 2. Python 3.11 o più recente, nessun pacchetto da installare (`python3 --version`). Sul Mac di Fabio:
    `~/tools/python-3.12/bin/python3`.
-3. `python3 -m unittest discover -s tests`: devono passare tutti (73 con la preparazione del job giornaliero).
+3. `python3 -m unittest discover -s tests`: devono passare tutti (76 con la gestione delle direzioni non disponibili).
 4. Fuori da git c'è `dati/` (~22 MB: cache di ARPAL e Open-Meteo, ignorata). O si copia la cartella dal vecchio PC, o si
    rigenera con `python3 -m meteo.verifica` (circa 15 minuti, ~350 richieste; ARPAL va chiamato da una rete normale: da IP
    cloud potrebbe essere bloccato).

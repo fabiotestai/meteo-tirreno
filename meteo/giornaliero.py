@@ -38,11 +38,18 @@ def quality(records: dict[int, dict], now: datetime, cfg: dict) -> tuple[dict, d
     ispezione e non basta, da solo, a eliminare automaticamente delle ore.
     """
     clean, invalid, stuck = {}, [], []
+    missing_direction = 0
     max_speed, max_gust = float(cfg["velocita_massima_ms"]), float(cfg["raffica_massima_ms"])
     run, previous, previous_t = [], None, None
     for t, v in sorted(records.items()):
         if t > now.timestamp():
             continue
+        # -1 è il codice ARPAL di direzione non disponibile. La copia lascia
+        # intatto il CSV originale e non nasconde altri valori fuori scala.
+        v = dict(v)
+        if v.get("dir") == -1:
+            v["dir"] = None
+        missing_direction += v.get("dir") is None
         bad = [k for k, limit in (("speed", max_speed), ("gust", max_gust), ("dir", 360))
                if v.get(k) is not None and (not math.isfinite(v[k]) or not 0 <= v[k] <= limit)]
         if bad:
@@ -62,7 +69,8 @@ def quality(records: dict[int, dict], now: datetime, cfg: dict) -> tuple[dict, d
         stuck.append({"dal": run[0], "al": run[-1], "ore": len(run)})
     last = max((t for t, v in clean.items() if v["speed"] is not None), default=None)
     late = (now.timestamp() - last) / 3600 if last is not None else None
-    return clean, {"ore_fuori_scala": invalid, "sensore_costante_sospetto": stuck,
+    return clean, {"ore_fuori_scala": invalid, "ore_direzione_non_disponibile": missing_direction,
+                   "sensore_costante_sospetto": stuck,
                    "ultima_velocita": last, "ritardo_ore": round(late, 1) if late is not None else None,
                    "muta": late is None or late > 24}
 
@@ -164,11 +172,12 @@ def summary(result: dict) -> str:
     lines = ["# Raccolta e verifica giornaliera", "", f"Data UTC: {result['data_utc']}", "",
              f"Quota stimata: {result['quota']['totale']} chiamate/giorno (senza retry o corse manuali).", "",
              "I punteggi sono dei modelli grezzi. Nessun riallenamento MOS.", "",
-             "| Stazione | Ultima velocità UTC | Ritardo h | Ore valide 30 / 365 giorni |", "|---|---|---|---|"]
+             "Direzione -1 = non disponibile: conta fra le assenze, senza avvisi di fuori scala.", "",
+             "| Stazione | Ultima velocità UTC | Ritardo h | Direzione N/D nel campione QC | Ore valide 30 / 365 giorni |", "|---|---|---|---|---|"]
     for st in result["stazioni"]:
         q = st["qualita"]
         last = datetime.fromtimestamp(q["ultima_velocita"], timezone.utc).isoformat() if q["ultima_velocita"] else "mai"
-        lines.append(f"| {st['nome']} | {last} | {q['ritardo_ore']} | {st['finestre']['30']['ore_valide']} / {st['finestre']['365']['ore_valide']} |")
+        lines.append(f"| {st['nome']} | {last} | {q['ritardo_ore']} | {q['ore_direzione_non_disponibile']} | {st['finestre']['30']['ore_valide']} / {st['finestre']['365']['ore_valide']} |")
     lines += ["", "## Avvisi", ""] + [f"- {w}" for w in result["avvisi"]]
     if not result["avvisi"]:
         lines.append("Nessuno.")

@@ -1,10 +1,10 @@
 name: Raccolta e verifica giornaliera
 
-# Preparato per una corsa al giorno, ma lo schedule resta disattivato fino
-# alla revisione del passo 3 e all'integrazione in main. Nessun deploy Pages.
-# schedule:
-#   - cron: "47 5 * * *"  # UTC, lontano dalla build della mappa
+# Raccolta giornaliera e controllo automatico sui cambi della pipeline in main.
+# Nessun deploy Pages; dati e rapporti sono salvati soltanto sul ramo dati.
 on:
+  schedule:
+    - cron: "47 5 * * *"  # 05:47 UTC, lontano dalla build della mappa
   workflow_dispatch:
     inputs:
       solo_cache:
@@ -16,7 +16,7 @@ on:
         type: boolean
         default: false
   push:
-    branches: [passo-2-mos]
+    branches: [main]
     paths:
       - .github/workflows/dati.yml
       - meteo/archivio.py
