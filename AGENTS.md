@@ -19,6 +19,7 @@ Rispondi in italiano, anche nei messaggi di commit.
 python -m unittest discover -s tests   # test: devono passare prima di ogni commit
 python -m meteo.build --demo           # build con dati sintetici, senza rete
 python -m meteo.build                  # build con dati reali (consuma quota Open-Meteo)
+python -m meteo.giornaliero --solo-cache # qualità e punteggi 30/365 giorni, senza rete
 python -m http.server -d web 8000      # anteprima su http://localhost:8000
 ```
 
@@ -37,6 +38,19 @@ In un sandbox senza internet (per esempio Codex nel cloud) usa solo i test e `--
   etichette Esri a 450. Mappa di base Esri Dark Gray Canvas (nessuna chiave), fallback OpenStreetMap.
 - `.github/workflows/aggiorna.yml`: test → build → deploy Pages.
 - `meteo/arpal.py`: archivio orario ARPAL (form ASP a frame, sessione con cookie; un anno per richiesta).
+- `meteo/archivio.py`: CSV mensili e importazione senza rete della cache annuale; lettura compatibile con
+  verifica e MOS. `python -m meteo.giornaliero --importa dati --data <destinazione-vuota>` converte una copia,
+  senza cambiare la sorgente. Tempi UTC, osservati datati alla fine dell'ora, velocità in m/s.
+- `meteo/giornaliero.py`: raccolta degli ultimi 10 giorni, ricarica ARPAL mensile degli ultimi 365 giorni,
+  controlli qualità separati dai CSV originali e verifica dei modelli grezzi su 30/365 giorni.
+  `--data`, `--out`, `--solo-cache`, `--ricarica-completa`, `--correzioni` per percorsi e prove.
+  Una risposta vuota o fallita non cancella la cache; ore e valori null non restituiti restano conservati.
+  Una ricarica ARPAL che omette ore già note viene segnalata e non marcata come completata: non è possibile
+  distinguere una revoca della misura da una risposta incompleta. Le sequenze costanti sono solo sospette.
+  Direzioni fuori [0, 360] (anche -1, presente nella cache) vengono escluse dal nuovo campione, senza
+  riscrivere gli originali né cambiare il MOS operativo; i nuovi punteggi possono quindi differire dai vecchi.
+  `rapporti/coefficienti/` conserva copie per hash; `registro_mos/` registra quando il job le ha lette,
+  non certifica i coefficienti serviti nelle precedenti corse della mappa. Nessun punteggio MOS operativo ancora.
 - `meteo/verifica.py`: fase 1, `python -m meteo.verifica` → osservati ARPAL + Open-Meteo previous runs
   alle coordinate delle stazioni, punteggi in `web/data/verifica.json` e `dati/verifica.csv`.
   Cache dei download in `dati/` (non versionata): anni e mesi conclusi non si riscaricano.
@@ -56,7 +70,10 @@ In un sandbox senza internet (per esempio Codex nel cloud) usa solo i test e `--
 - L'interpolazione del vento si fa sulle componenti u, v, mai sulla direzione (350°→10° darebbe 180°).
 - Direzione = da dove PROVIENE il vento (Libeccio 225°); le frecce nella pagina indicano dove va.
 - Un modello che fallisce non deve bloccare gli altri; gli errori escono come annotazioni `::warning`/`::error`.
-- Quota Open-Meteo gratuita ~10.000 chiamate/giorno (una per punto): oggi ~8.100 (comprese le 9 delle tre stazioni del MOS). Ricalcolare prima
+- Quota Open-Meteo gratuita ~10.000 chiamate/giorno: stima aggiornata 19/10/2026 = 8.248 per le 8 build della
+  mappa (incluse le stazioni MOS) + al massimo 32 per il job giornaliero = 8.280, esclusi retry, metadati statici,
+  backfill e corse manuali. Le richieste incrementali durano <= 10 giorni, con <= 9 variabili, e possono
+  attraversare due mesi. Ricalcolare prima
   di infittire la griglia o aggiungere modelli. L'API gratuita è solo per uso non commerciale.
 - Confronti tra modelli o correzioni sempre sulle STESSE ore, scelte senza guardare la previsione (la
   direzione si misura solo con vento OSSERVATO sopra soglia). Filtrare sulla velocità prevista falsa il confronto:
@@ -95,8 +112,15 @@ Prima di ogni passo nuovo Fabio vuole una conferma esplicita; push su `main` sol
      Esito dal runner GitHub (corsa 39113546715, 18/10/2026): tutto OK, stessi numeri che dall'Italia (ARPAL 247 ore in 6 s,
      ultima 2 h prima; OMIRL a 0,2 h; Open-Meteo completo). Nessun blocco degli IP esteri: il piano B dal Mac non serve.
      Una prova sola: il job giornaliero deve comunque gestire un ARPAL che non risponde (avviso, nessun blocco).
-     Le azioni `checkout@v4`/`setup-python@v5` girano su Node 20, deprecato: aggiornarle anche in `aggiorna.yml`.
+     Le azioni Node 20 deprecate sono aggiornate nella preparazione del 19/10/2026, anche in `aggiorna.yml`.
    - ramo `dati` con i CSV (osservati e previsioni, divisi per mese) e `correzioni/mos.json`;
+     Preparazione del 19/10/2026 su `passo-2-mos`: `meteo.archivio`, `meteo.giornaliero` e workflow
+     `.github/workflows/dati.yml`. Prova su push mirati del ramo di lavoro e avvio manuale (dopo l'integrazione
+     nel ramo predefinito); schedule giornaliero proposto 05:47 UTC, ancora commentato. Nessun deploy.
+     Le azioni dei workflow sono aggiornate a Node 24 e fissate a SHA, comprese quelle Pages e gli artifact.
+     Il job scrive soltanto sul checkout separato di `dati`, con corse serializzate e push senza force.
+     Importazione locale verificata riga per riga: 97.881 ore osservate, 734.900 righe previste, 492 CSV mensili.
+     Coefficienti copiati, senza riallenamento. Da verificare il primo giro sul runner prima dell'attivazione.
    - job giornaliero: ARPAL incrementale (ultimi 10 giorni, sovrascrivendo) più ricarica mensile completa (correzioni a
      posteriori), controlli di qualità (valori fuori scala, sensore bloccato, stazione muta da più di 24 h), verifica su
      finestre di 30 e 365 giorni, MOS riallenato ogni mese su 12 mesi mobili;
@@ -120,7 +144,7 @@ ha battuto ICON-2I.
    (`main` pubblica il sito a ogni push).
 2. Python 3.11 o più recente, nessun pacchetto da installare (`python3 --version`). Sul Mac di Fabio:
    `~/tools/python-3.12/bin/python3`.
-3. `python3 -m unittest discover -s tests`: devono passare tutti (60 il 19/10/2026).
+3. `python3 -m unittest discover -s tests`: devono passare tutti (73 con la preparazione del job giornaliero).
 4. Fuori da git c'è `dati/` (~22 MB: cache di ARPAL e Open-Meteo, ignorata). O si copia la cartella dal vecchio PC, o si
    rigenera con `python3 -m meteo.verifica` (circa 15 minuti, ~350 richieste; ARPAL va chiamato da una rete normale: da IP
    cloud potrebbe essere bloccato).

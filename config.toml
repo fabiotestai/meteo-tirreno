@@ -146,3 +146,11 @@ in_mappa = true
 test_dal = "2026-04-14"       # si allena prima, si misura dopo: 6 mesi mai visti
 lambda = [3, 30, 300, 3000]   # quanto i settori sono tirati verso il fit comune (scelto in allenamento)
 raffiche = ["ICON-2I", "ICON-EU"]   # ECMWF open data ha le raffiche solo al giorno 0, quindi non entra nel MOS delle raffiche
+
+# Raccolta giornaliera: sorgenti originali conservate, controlli separati.
+[giornaliero]
+sovrapposizione_giorni = 10
+finestra_storica_giorni = 365
+velocita_massima_ms = 75.0       # limite fisico prudente, non soglia di vento utile
+raffica_massima_ms = 100.0
+ore_sensore_costante = 24       # solo avviso: anche una calma reale può durare

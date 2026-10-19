@@ -41,7 +41,7 @@ import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from . import arpal, openmeteo
+from . import archivio, arpal, openmeteo
 from .build import annotate, model_key
 from .config import ROOT, load_config
 from .wind import KNOT_MS, speed_dir_to_uv, wind_name, WIND_NAMES
@@ -76,13 +76,18 @@ def load_observed(station: dict, start: date, today: date, archive_factory, offl
     out: dict[int, dict] = {}
     for year in range(start.year, today.year + 1):
         path = DATA / "osservati" / f"ARPAL_{station['codice']}_{year}.csv"
-        if not offline and (year == today.year or not path.exists()):
+        monthly = list(path.parent.glob(f"ARPAL_{station['codice']}_{year}-??.csv"))
+        if not offline and (year == today.year or not (path.exists() or monthly)):
             first = max(start, date(year, 1, 1))
             last = min(today, date(year, 12, 31))
             print(f"  ARPAL {station['nome']} {year} ...", flush=True)
             data = archive_factory().hourly(station["codice"], first, last)
             rows = [[t, _utc(t), v.get("speed", ""), v.get("gust", ""), v.get("dir", "")] for t, v in sorted(data.items())]
-            _write_csv(path, ["t", "utc", "velocita_ms", "raffica_ms", "direzione"], rows)
+            if monthly:
+                existing = archivio.read_observed(DATA, station["codice"])
+                archivio.write_observed(DATA, station["codice"], archivio.merge_records(existing, data))
+            else:
+                _write_csv(path, ["t", "utc", "velocita_ms", "raffica_ms", "direzione"], rows)
         if path.exists():
             with open(path) as f:
                 for r in csv.DictReader(f):
@@ -91,7 +96,9 @@ def load_observed(station: dict, start: date, today: date, archive_factory, offl
                         "gust": _num(r["raffica_ms"]),
                         "dir": _num(r["direzione"]),
                     }
-    return out
+    # Gli archivi mensili del job giornaliero hanno precedenza sugli annuali.
+    out.update(archivio.read_observed(DATA, station["codice"]))
+    return {t: v for t, v in out.items() if start <= datetime.fromtimestamp(t, timezone.utc).date() <= today}
 
 
 # ---------------------------------------------------------------- cache previsti

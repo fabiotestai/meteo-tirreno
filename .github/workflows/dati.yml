@@ -1,0 +1,91 @@
+name: Raccolta e verifica giornaliera
+
+# Preparato per una corsa al giorno, ma lo schedule resta disattivato fino
+# alla revisione del passo 3 e all'integrazione in main. Nessun deploy Pages.
+# schedule:
+#   - cron: "47 5 * * *"  # UTC, lontano dalla build della mappa
+on:
+  workflow_dispatch:
+    inputs:
+      solo_cache:
+        description: Verifica senza download e senza commit
+        type: boolean
+        default: false
+      ricarica_completa:
+        description: Ricarica ARPAL degli ultimi 365 giorni
+        type: boolean
+        default: false
+  push:
+    branches: [passo-2-mos]
+    paths:
+      - .github/workflows/dati.yml
+      - meteo/archivio.py
+      - meteo/giornaliero.py
+      - meteo/verifica.py
+      - tests/test_giornaliero.py
+      - config.toml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: archivio-dati
+  cancel-in-progress: false
+
+jobs:
+  raccolta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write  # commit limitato al checkout separato del ramo dati
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Test
+        run: python -m unittest discover -s tests
+
+      - name: Leggi archivio persistente
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: dati
+          path: archivio
+
+      - name: Aggiorna dati e verifica
+        env:
+          SOLO_CACHE: ${{ inputs.solo_cache || false }}
+          RICARICA_COMPLETA: ${{ inputs.ricarica_completa || false }}
+        run: |
+          args=()
+          if [ "$SOLO_CACHE" = true ]; then args+=(--solo-cache); fi
+          if [ "$RICARICA_COMPLETA" = true ]; then args+=(--ricarica-completa); fi
+          python -m meteo.giornaliero \
+            --data archivio/dati --out archivio/rapporti \
+            --correzioni archivio/correzioni/mos.json "${args[@]}"
+
+      - name: Salva soltanto sul ramo dati
+        if: ${{ !inputs.solo_cache }}
+        working-directory: archivio
+        run: |
+          test "$(git branch --show-current)" = dati
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- dati rapporti correzioni
+          if ! git diff --cached --quiet; then
+            git commit -m "Aggiorna osservati, previsioni e verifica giornaliera"
+            git push origin HEAD:refs/heads/dati
+          fi
+
+      - name: Conserva il rapporto anche in caso di errore
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: verifica-giornaliera
+          path: archivio/rapporti
+          if-no-files-found: warn
+          retention-days: 30
