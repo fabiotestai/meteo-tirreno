@@ -1,6 +1,6 @@
 # Raccolta e verifica giornaliera
 
-Data UTC: 2026-11-16
+Data UTC: 2026-11-17
 
 Quota stimata: 8280 chiamate/giorno (senza retry o corse manuali).
 
@@ -10,10 +10,10 @@ Direzione -1 = non disponibile: conta fra le assenze, senza avvisi di fuori scal
 
 | Stazione | Ultima velocità UTC | Ritardo h | Direzione N/D nel campione QC | Ore valide 30 / 365 giorni |
 |---|---|---|---|---|
-| Genova - Porto Antico | 2026-11-16T13:00:00+00:00 | 1.0 | 302 | 709 / 8458 |
-| La Spezia | 2026-11-16T13:00:00+00:00 | 1.0 | 358 | 698 / 8403 |
-| Portovenere | 2026-11-16T13:00:00+00:00 | 1.0 | 312 | 713 / 8448 |
-| Luni - Provasco | 2026-11-16T13:00:00+00:00 | 1.0 | 213 | 707 / 8549 |
+| Genova - Porto Antico | 2026-11-17T13:00:00+00:00 | 1.9 | 301 | 710 / 8459 |
+| La Spezia | 2026-11-17T13:00:00+00:00 | 1.9 | 358 | 696 / 8402 |
+| Portovenere | 2026-11-17T13:00:00+00:00 | 1.9 | 313 | 712 / 8448 |
+| Luni - Provasco | 2026-11-17T13:00:00+00:00 | 1.9 | 215 | 703 / 8545 |
 
 ## Avvisi
 
@@ -23,107 +23,107 @@ Nessuno.
 
 | Stazione | Finestra | Modello | Giorno | N | MAE kn | MAE direzione ° |
 |---|---|---|---|---|---|---|
-| Genova - Porto Antico | 30 | icon2i | 0 | 709 | 1.81 | 15.0 |
-| Genova - Porto Antico | 30 | iconeu | 0 | 709 | 2.62 | 15.6 |
-| Genova - Porto Antico | 30 | ecmwf | 0 | 709 | 2.6 | 21.5 |
-| Genova - Porto Antico | 30 | icon2i | 1 | 709 | 2.14 | 16.4 |
-| Genova - Porto Antico | 30 | iconeu | 1 | 709 | 2.8 | 14.6 |
-| Genova - Porto Antico | 30 | ecmwf | 1 | 709 | 2.65 | 20.9 |
-| Genova - Porto Antico | 30 | icon2i | 2 | 709 | 2.44 | 19.3 |
-| Genova - Porto Antico | 30 | iconeu | 2 | 709 | 2.87 | 16.9 |
-| Genova - Porto Antico | 30 | ecmwf | 2 | 709 | 2.8 | 21.6 |
-| Genova - Porto Antico | 30 | aromehd | 0 | 709 | 2.19 | 13.8 |
-| Genova - Porto Antico | 30 | icon2i | 0 | 709 | 1.81 | 15.0 |
-| Genova - Porto Antico | 30 | aromehd | 1 | 709 | 2.32 | 16.6 |
-| Genova - Porto Antico | 30 | icon2i | 1 | 709 | 2.14 | 16.4 |
-| Genova - Porto Antico | 365 | icon2i | 0 | 8458 | 1.76 | 21.8 |
-| Genova - Porto Antico | 365 | iconeu | 0 | 8458 | 2.19 | 23.9 |
-| Genova - Porto Antico | 365 | ecmwf | 0 | 8458 | 2.06 | 27.9 |
-| Genova - Porto Antico | 365 | icon2i | 1 | 7368 | 1.87 | 21.8 |
-| Genova - Porto Antico | 365 | iconeu | 1 | 7368 | 2.37 | 25.3 |
-| Genova - Porto Antico | 365 | ecmwf | 1 | 7368 | 2.18 | 28.5 |
-| Genova - Porto Antico | 365 | icon2i | 2 | 7245 | 1.99 | 23.5 |
-| Genova - Porto Antico | 365 | iconeu | 2 | 7245 | 2.48 | 27.0 |
-| Genova - Porto Antico | 365 | ecmwf | 2 | 7245 | 2.24 | 28.2 |
-| Genova - Porto Antico | 365 | aromehd | 0 | 2355 | 1.81 | 21.5 |
-| Genova - Porto Antico | 365 | icon2i | 0 | 2355 | 1.68 | 23.2 |
-| Genova - Porto Antico | 365 | aromehd | 1 | 2348 | 2.03 | 24.5 |
-| Genova - Porto Antico | 365 | icon2i | 1 | 2348 | 1.82 | 24.1 |
-| La Spezia | 30 | icon2i | 0 | 698 | 1.96 | 39.9 |
-| La Spezia | 30 | iconeu | 0 | 698 | 2.05 | 34.8 |
-| La Spezia | 30 | ecmwf | 0 | 698 | 4.15 | 45.1 |
-| La Spezia | 30 | icon2i | 1 | 698 | 2.1 | 40.4 |
-| La Spezia | 30 | iconeu | 1 | 698 | 2.14 | 40.0 |
-| La Spezia | 30 | ecmwf | 1 | 698 | 4.43 | 48.2 |
-| La Spezia | 30 | icon2i | 2 | 698 | 2.12 | 41.7 |
-| La Spezia | 30 | iconeu | 2 | 698 | 2.16 | 37.4 |
-| La Spezia | 30 | ecmwf | 2 | 698 | 4.36 | 48.4 |
-| La Spezia | 30 | aromehd | 0 | 698 | 1.89 | 30.8 |
-| La Spezia | 30 | icon2i | 0 | 698 | 1.96 | 39.9 |
-| La Spezia | 30 | aromehd | 1 | 698 | 1.88 | 32.9 |
-| La Spezia | 30 | icon2i | 1 | 698 | 2.1 | 40.4 |
-| La Spezia | 365 | icon2i | 0 | 8403 | 2.18 | 35.5 |
-| La Spezia | 365 | iconeu | 0 | 8403 | 2.27 | 39.8 |
-| La Spezia | 365 | ecmwf | 0 | 8403 | 3.91 | 53.3 |
-| La Spezia | 365 | icon2i | 1 | 7309 | 2.11 | 38.8 |
-| La Spezia | 365 | iconeu | 1 | 7309 | 2.22 | 40.5 |
-| La Spezia | 365 | ecmwf | 1 | 7309 | 3.9 | 55.2 |
-| La Spezia | 365 | icon2i | 2 | 7183 | 2.15 | 39.7 |
-| La Spezia | 365 | iconeu | 2 | 7183 | 2.24 | 41.6 |
-| La Spezia | 365 | ecmwf | 2 | 7183 | 3.93 | 57.1 |
-| La Spezia | 365 | aromehd | 0 | 2330 | 1.83 | 31.5 |
-| La Spezia | 365 | icon2i | 0 | 2330 | 1.99 | 37.2 |
-| La Spezia | 365 | aromehd | 1 | 2322 | 1.86 | 36.6 |
-| La Spezia | 365 | icon2i | 1 | 2322 | 2.0 | 39.5 |
-| Portovenere | 30 | icon2i | 0 | 713 | 2.68 | 29.0 |
-| Portovenere | 30 | iconeu | 0 | 713 | 4.12 | 34.0 |
-| Portovenere | 30 | ecmwf | 0 | 713 | 3.11 | 43.7 |
-| Portovenere | 30 | icon2i | 1 | 713 | 2.94 | 31.4 |
-| Portovenere | 30 | iconeu | 1 | 713 | 4.17 | 35.9 |
-| Portovenere | 30 | ecmwf | 1 | 713 | 3.18 | 44.5 |
-| Portovenere | 30 | icon2i | 2 | 713 | 3.16 | 33.3 |
-| Portovenere | 30 | iconeu | 2 | 713 | 4.21 | 34.8 |
-| Portovenere | 30 | ecmwf | 2 | 713 | 3.25 | 45.2 |
-| Portovenere | 30 | aromehd | 0 | 713 | 2.52 | 33.2 |
-| Portovenere | 30 | icon2i | 0 | 713 | 2.68 | 29.0 |
-| Portovenere | 30 | aromehd | 1 | 713 | 2.75 | 30.3 |
-| Portovenere | 30 | icon2i | 1 | 713 | 2.94 | 31.4 |
-| Portovenere | 365 | icon2i | 0 | 8448 | 2.31 | 32.2 |
-| Portovenere | 365 | iconeu | 0 | 8448 | 2.93 | 36.9 |
-| Portovenere | 365 | ecmwf | 0 | 8448 | 2.89 | 45.1 |
-| Portovenere | 365 | icon2i | 1 | 7358 | 2.4 | 33.5 |
-| Portovenere | 365 | iconeu | 1 | 7358 | 3.04 | 37.0 |
-| Portovenere | 365 | ecmwf | 1 | 7358 | 2.87 | 45.4 |
-| Portovenere | 365 | icon2i | 2 | 7222 | 2.46 | 34.4 |
-| Portovenere | 365 | iconeu | 2 | 7222 | 3.07 | 38.1 |
-| Portovenere | 365 | ecmwf | 2 | 7222 | 2.95 | 46.7 |
-| Portovenere | 365 | aromehd | 0 | 2349 | 2.14 | 32.1 |
-| Portovenere | 365 | icon2i | 0 | 2349 | 2.25 | 29.6 |
-| Portovenere | 365 | aromehd | 1 | 2340 | 2.22 | 33.2 |
-| Portovenere | 365 | icon2i | 1 | 2340 | 2.31 | 32.2 |
-| Luni - Provasco | 30 | icon2i | 0 | 707 | 1.57 | 31.7 |
-| Luni - Provasco | 30 | iconeu | 0 | 707 | 1.67 | 48.2 |
-| Luni - Provasco | 30 | ecmwf | 0 | 707 | 1.91 | 57.0 |
-| Luni - Provasco | 30 | icon2i | 1 | 707 | 1.66 | 34.6 |
-| Luni - Provasco | 30 | iconeu | 1 | 707 | 1.78 | 49.0 |
-| Luni - Provasco | 30 | ecmwf | 1 | 707 | 1.99 | 61.0 |
-| Luni - Provasco | 30 | icon2i | 2 | 707 | 1.81 | 32.2 |
-| Luni - Provasco | 30 | iconeu | 2 | 707 | 1.82 | 47.6 |
-| Luni - Provasco | 30 | ecmwf | 2 | 707 | 1.93 | 60.4 |
-| Luni - Provasco | 30 | aromehd | 0 | 707 | 2.14 | 38.1 |
-| Luni - Provasco | 30 | icon2i | 0 | 707 | 1.57 | 31.7 |
-| Luni - Provasco | 30 | aromehd | 1 | 707 | 2.33 | 35.1 |
-| Luni - Provasco | 30 | icon2i | 1 | 707 | 1.66 | 34.6 |
-| Luni - Provasco | 365 | icon2i | 0 | 8549 | 1.36 | 31.0 |
-| Luni - Provasco | 365 | iconeu | 0 | 8549 | 1.53 | 44.7 |
-| Luni - Provasco | 365 | ecmwf | 0 | 8549 | 2.03 | 52.8 |
-| Luni - Provasco | 365 | icon2i | 1 | 7438 | 1.39 | 32.8 |
-| Luni - Provasco | 365 | iconeu | 1 | 7438 | 1.55 | 46.1 |
-| Luni - Provasco | 365 | ecmwf | 1 | 7438 | 2.01 | 52.3 |
-| Luni - Provasco | 365 | icon2i | 2 | 7310 | 1.45 | 34.6 |
-| Luni - Provasco | 365 | iconeu | 2 | 7310 | 1.63 | 48.6 |
-| Luni - Provasco | 365 | ecmwf | 2 | 7310 | 2.02 | 53.8 |
-| Luni - Provasco | 365 | aromehd | 0 | 2381 | 1.6 | 34.8 |
-| Luni - Provasco | 365 | icon2i | 0 | 2381 | 1.26 | 30.9 |
-| Luni - Provasco | 365 | aromehd | 1 | 2373 | 1.68 | 36.7 |
-| Luni - Provasco | 365 | icon2i | 1 | 2373 | 1.25 | 32.7 |
+| Genova - Porto Antico | 30 | icon2i | 0 | 710 | 1.79 | 14.6 |
+| Genova - Porto Antico | 30 | iconeu | 0 | 710 | 2.59 | 15.0 |
+| Genova - Porto Antico | 30 | ecmwf | 0 | 710 | 2.59 | 20.7 |
+| Genova - Porto Antico | 30 | icon2i | 1 | 710 | 2.14 | 16.1 |
+| Genova - Porto Antico | 30 | iconeu | 1 | 710 | 2.79 | 13.9 |
+| Genova - Porto Antico | 30 | ecmwf | 1 | 710 | 2.65 | 20.1 |
+| Genova - Porto Antico | 30 | icon2i | 2 | 710 | 2.44 | 18.9 |
+| Genova - Porto Antico | 30 | iconeu | 2 | 710 | 2.87 | 16.1 |
+| Genova - Porto Antico | 30 | ecmwf | 2 | 710 | 2.81 | 20.4 |
+| Genova - Porto Antico | 30 | aromehd | 0 | 710 | 2.23 | 13.2 |
+| Genova - Porto Antico | 30 | icon2i | 0 | 710 | 1.79 | 14.6 |
+| Genova - Porto Antico | 30 | aromehd | 1 | 710 | 2.31 | 16.6 |
+| Genova - Porto Antico | 30 | icon2i | 1 | 710 | 2.14 | 16.1 |
+| Genova - Porto Antico | 365 | icon2i | 0 | 8459 | 1.75 | 21.7 |
+| Genova - Porto Antico | 365 | iconeu | 0 | 8459 | 2.18 | 23.8 |
+| Genova - Porto Antico | 365 | ecmwf | 0 | 8459 | 2.06 | 27.8 |
+| Genova - Porto Antico | 365 | icon2i | 1 | 7369 | 1.86 | 21.8 |
+| Genova - Porto Antico | 365 | iconeu | 1 | 7369 | 2.37 | 25.2 |
+| Genova - Porto Antico | 365 | ecmwf | 1 | 7369 | 2.18 | 28.4 |
+| Genova - Porto Antico | 365 | icon2i | 2 | 7246 | 1.99 | 23.4 |
+| Genova - Porto Antico | 365 | iconeu | 2 | 7246 | 2.48 | 26.9 |
+| Genova - Porto Antico | 365 | ecmwf | 2 | 7246 | 2.23 | 28.1 |
+| Genova - Porto Antico | 365 | aromehd | 0 | 2379 | 1.83 | 21.4 |
+| Genova - Porto Antico | 365 | icon2i | 0 | 2379 | 1.68 | 23.1 |
+| Genova - Porto Antico | 365 | aromehd | 1 | 2372 | 2.02 | 24.5 |
+| Genova - Porto Antico | 365 | icon2i | 1 | 2372 | 1.82 | 24.0 |
+| La Spezia | 30 | icon2i | 0 | 696 | 1.96 | 40.3 |
+| La Spezia | 30 | iconeu | 0 | 696 | 2.05 | 35.2 |
+| La Spezia | 30 | ecmwf | 0 | 696 | 4.23 | 45.4 |
+| La Spezia | 30 | icon2i | 1 | 696 | 2.1 | 41.0 |
+| La Spezia | 30 | iconeu | 1 | 696 | 2.14 | 40.9 |
+| La Spezia | 30 | ecmwf | 1 | 696 | 4.48 | 48.6 |
+| La Spezia | 30 | icon2i | 2 | 696 | 2.11 | 42.4 |
+| La Spezia | 30 | iconeu | 2 | 696 | 2.16 | 38.2 |
+| La Spezia | 30 | ecmwf | 2 | 696 | 4.47 | 48.8 |
+| La Spezia | 30 | aromehd | 0 | 696 | 1.89 | 31.0 |
+| La Spezia | 30 | icon2i | 0 | 696 | 1.96 | 40.3 |
+| La Spezia | 30 | aromehd | 1 | 696 | 1.89 | 33.7 |
+| La Spezia | 30 | icon2i | 1 | 696 | 2.1 | 41.0 |
+| La Spezia | 365 | icon2i | 0 | 8402 | 2.17 | 35.5 |
+| La Spezia | 365 | iconeu | 0 | 8402 | 2.26 | 39.7 |
+| La Spezia | 365 | ecmwf | 0 | 8402 | 3.91 | 53.2 |
+| La Spezia | 365 | icon2i | 1 | 7308 | 2.1 | 38.8 |
+| La Spezia | 365 | iconeu | 1 | 7308 | 2.2 | 40.4 |
+| La Spezia | 365 | ecmwf | 1 | 7308 | 3.89 | 55.2 |
+| La Spezia | 365 | icon2i | 2 | 7182 | 2.14 | 39.7 |
+| La Spezia | 365 | iconeu | 2 | 7182 | 2.23 | 41.6 |
+| La Spezia | 365 | ecmwf | 2 | 7182 | 3.93 | 57.1 |
+| La Spezia | 365 | aromehd | 0 | 2352 | 1.83 | 31.4 |
+| La Spezia | 365 | icon2i | 0 | 2352 | 1.98 | 37.2 |
+| La Spezia | 365 | aromehd | 1 | 2344 | 1.86 | 36.7 |
+| La Spezia | 365 | icon2i | 1 | 2344 | 1.99 | 39.5 |
+| Portovenere | 30 | icon2i | 0 | 712 | 2.68 | 29.6 |
+| Portovenere | 30 | iconeu | 0 | 712 | 4.07 | 34.4 |
+| Portovenere | 30 | ecmwf | 0 | 712 | 3.17 | 44.3 |
+| Portovenere | 30 | icon2i | 1 | 712 | 2.91 | 32.3 |
+| Portovenere | 30 | iconeu | 1 | 712 | 4.12 | 36.2 |
+| Portovenere | 30 | ecmwf | 1 | 712 | 3.21 | 45.3 |
+| Portovenere | 30 | icon2i | 2 | 712 | 3.14 | 34.2 |
+| Portovenere | 30 | iconeu | 2 | 712 | 4.17 | 35.0 |
+| Portovenere | 30 | ecmwf | 2 | 712 | 3.34 | 45.8 |
+| Portovenere | 30 | aromehd | 0 | 712 | 2.58 | 34.2 |
+| Portovenere | 30 | icon2i | 0 | 712 | 2.68 | 29.6 |
+| Portovenere | 30 | aromehd | 1 | 712 | 2.77 | 31.3 |
+| Portovenere | 30 | icon2i | 1 | 712 | 2.91 | 32.3 |
+| Portovenere | 365 | icon2i | 0 | 8448 | 2.3 | 32.0 |
+| Portovenere | 365 | iconeu | 0 | 8448 | 2.93 | 36.7 |
+| Portovenere | 365 | ecmwf | 0 | 8448 | 2.88 | 45.0 |
+| Portovenere | 365 | icon2i | 1 | 7358 | 2.39 | 33.4 |
+| Portovenere | 365 | iconeu | 1 | 7358 | 3.04 | 36.9 |
+| Portovenere | 365 | ecmwf | 1 | 7358 | 2.86 | 45.3 |
+| Portovenere | 365 | icon2i | 2 | 7222 | 2.45 | 34.3 |
+| Portovenere | 365 | iconeu | 2 | 7222 | 3.06 | 37.9 |
+| Portovenere | 365 | ecmwf | 2 | 7222 | 2.95 | 46.6 |
+| Portovenere | 365 | aromehd | 0 | 2372 | 2.14 | 32.3 |
+| Portovenere | 365 | icon2i | 0 | 2372 | 2.25 | 29.8 |
+| Portovenere | 365 | aromehd | 1 | 2363 | 2.22 | 33.4 |
+| Portovenere | 365 | icon2i | 1 | 2363 | 2.31 | 32.4 |
+| Luni - Provasco | 30 | icon2i | 0 | 703 | 1.57 | 31.6 |
+| Luni - Provasco | 30 | iconeu | 0 | 703 | 1.69 | 48.7 |
+| Luni - Provasco | 30 | ecmwf | 0 | 703 | 1.92 | 57.2 |
+| Luni - Provasco | 30 | icon2i | 1 | 703 | 1.66 | 34.7 |
+| Luni - Provasco | 30 | iconeu | 1 | 703 | 1.78 | 49.6 |
+| Luni - Provasco | 30 | ecmwf | 1 | 703 | 1.99 | 61.5 |
+| Luni - Provasco | 30 | icon2i | 2 | 703 | 1.83 | 32.2 |
+| Luni - Provasco | 30 | iconeu | 2 | 703 | 1.85 | 48.0 |
+| Luni - Provasco | 30 | ecmwf | 2 | 703 | 1.94 | 60.4 |
+| Luni - Provasco | 30 | aromehd | 0 | 703 | 2.17 | 38.1 |
+| Luni - Provasco | 30 | icon2i | 0 | 703 | 1.57 | 31.6 |
+| Luni - Provasco | 30 | aromehd | 1 | 703 | 2.39 | 35.5 |
+| Luni - Provasco | 30 | icon2i | 1 | 703 | 1.66 | 34.7 |
+| Luni - Provasco | 365 | icon2i | 0 | 8545 | 1.36 | 31.0 |
+| Luni - Provasco | 365 | iconeu | 0 | 8545 | 1.53 | 44.7 |
+| Luni - Provasco | 365 | ecmwf | 0 | 8545 | 2.03 | 52.7 |
+| Luni - Provasco | 365 | icon2i | 1 | 7434 | 1.38 | 32.7 |
+| Luni - Provasco | 365 | iconeu | 1 | 7434 | 1.55 | 46.1 |
+| Luni - Provasco | 365 | ecmwf | 1 | 7434 | 2.0 | 52.2 |
+| Luni - Provasco | 365 | icon2i | 2 | 7306 | 1.45 | 34.5 |
+| Luni - Provasco | 365 | iconeu | 2 | 7306 | 1.63 | 48.6 |
+| Luni - Provasco | 365 | ecmwf | 2 | 7306 | 2.01 | 53.6 |
+| Luni - Provasco | 365 | aromehd | 0 | 2401 | 1.61 | 34.7 |
+| Luni - Provasco | 365 | icon2i | 0 | 2401 | 1.26 | 30.8 |
+| Luni - Provasco | 365 | aromehd | 1 | 2393 | 1.69 | 36.7 |
+| Luni - Provasco | 365 | icon2i | 1 | 2393 | 1.25 | 32.6 |
